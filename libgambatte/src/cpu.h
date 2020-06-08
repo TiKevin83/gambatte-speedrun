@@ -20,6 +20,7 @@
 #define CPU_H
 
 #include "memory.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -28,82 +29,91 @@ public:
 	CPU();
 	long runFor(unsigned long cycles);
 	void setStatePtrs(SaveState &state);
-	void saveState(SaveState &state);
 	void loadState(SaveState const &state);
-	void loadSavedata() { mem_.loadSavedata(cycleCounter_); }
-	void saveSavedata() { mem_.saveSavedata(cycleCounter_); }
+	void setLayers(unsigned mask) { mem_.setLayers(mask); }
+	void loadSavedata(char const *data) { mem_.loadSavedata(data, cycleCounter_); }
+	int saveSavedataLength() {return mem_.saveSavedataLength(); }
+	void saveSavedata(char *dest) { mem_.saveSavedata(dest, cycleCounter_); }
+
+	bool getMemoryArea(int which, unsigned char **data, int *length) { return mem_.getMemoryArea(which, data, length); }
 
 	void setVideoBuffer(uint_least32_t *videoBuf, std::ptrdiff_t pitch) {
 		mem_.setVideoBuffer(videoBuf, pitch);
 	}
 
-	void setInputGetter(InputGetter *getInput, void *p) {
-		mem_.setInputGetter(getInput, p);
+	void setInputGetter(unsigned (*getInput)()) {
+		mem_.setInputGetter(getInput);
 	}
 
-	void setSaveDir(std::string const &sdir) {
-		mem_.setSaveDir(sdir);
+	void setReadCallback(MemoryCallback callback) {
+		mem_.setReadCallback(callback);
 	}
 
-	std::string const saveBasePath() const {
-		return mem_.saveBasePath();
+	void setWriteCallback(MemoryCallback callback) {
+		mem_.setWriteCallback(callback);
 	}
 
-	void setOsdElement(transfer_ptr<OsdElement> osdElement) {
-		mem_.setOsdElement(osdElement);
+	void setExecCallback(MemoryCallback callback) {
+		mem_.setExecCallback(callback);
 	}
 
-	LoadRes load(std::string const &romfile, unsigned flags) {
-		return mem_.loadROM(romfile, flags);
+	void setCDCallback(CDCallback cdc) {
+		mem_.setCDCallback(cdc);
+	}
+
+	void setTraceCallback(void (*callback)(void *)) {
+		tracecallback = callback;
+	}
+
+	void setScanlineCallback(void (*callback)(), int sl) {
+		mem_.setScanlineCallback(callback, sl);
+	}
+
+	void setLinkCallback(void(*callback)()) {
+		mem_.setLinkCallback(callback);
+	}
+
+	LoadRes load(char const *romfiledata, unsigned romfilelength, unsigned flags) {
+		return mem_.loadROM(romfiledata, romfilelength, flags);
 	}
 
 	bool loaded() const { return mem_.loaded(); }
 	char const * romTitle() const { return mem_.romTitle(); }
-	PakInfo const pakInfo(bool multicartCompat) const { return mem_.pakInfo(multicartCompat); }
 	void setSoundBuffer(uint_least32_t *buf) { mem_.setSoundBuffer(buf); }
 	std::size_t fillSoundBuffer() { return mem_.fillSoundBuffer(cycleCounter_); }
-	void stall(unsigned long cycles) { mem_.stall(cycleCounter_, cycles); }
 	bool isCgb() const { return mem_.isCgb(); }
 
 	void setDmgPaletteColor(int palNum, int colorNum, unsigned long rgb32) {
 		mem_.setDmgPaletteColor(palNum, colorNum, rgb32);
 	}
 
-	void setTrueColors(bool trueColors) { mem_.setTrueColors(trueColors); }
-	void setTimeMode(bool useCycles) { mem_.setTimeMode(useCycles, cycleCounter_); }
-
-	void setGameGenie(std::string const &codes) { mem_.setGameGenie(codes); }
-	void setGameShark(std::string const &codes) { mem_.setGameShark(codes); }
-	void setBios(unsigned char *buffer, std::size_t size) { mem_.setBios(buffer, size); }
-
-	unsigned char externalRead(unsigned short addr) {
-		return mem_.read(addr, cycleCounter_);
+	void setCgbPalette(unsigned *lut) {
+		mem_.setCgbPalette(lut);
 	}
+	void setTimeMode(bool useCycles) { mem_.setTimeMode(useCycles, cycleCounter_); }
+	void setRtcDivisorOffset(long const rtcDivisorOffset) { mem_.setRtcDivisorOffset(rtcDivisorOffset); }
+
+	void setBios(char const *buffer, std::size_t size) { mem_.setBios(buffer, size); }
+
+	unsigned char externalRead(unsigned short addr) {return mem_.peek(addr); }
 
 	void externalWrite(unsigned short addr, unsigned char val) {
-		mem_.write(addr, val, cycleCounter_);
+		mem_.write_nocb(addr, val, cycleCounter_);
 	}
 
+	int linkStatus(int which) { return mem_.linkStatus(which); }
+
 	void getRegs(int *dest);
-	void setRegs(int *src);
 	void setInterruptAddresses(int *addrs, int numAddrs);
 	int getHitInterruptAddress();
-
-	unsigned timeNow() const { return mem_.timeNow(cycleCounter_); }
-
-	unsigned long getCycleCounter() { return cycleCounter_; }
-	unsigned long getDivLastUpdate() { return mem_.getDivLastUpdate(); }
-	unsigned char getRawIOAMHRAM(int offset) { return mem_.getRawIOAMHRAM(offset); }
-
-	void setSpeedupFlags(unsigned flags) { mem_.setSpeedupFlags(flags); }
 
 private:
 	Memory mem_;
 	unsigned long cycleCounter_;
-	unsigned short pc_;
+	unsigned short pc;
 	unsigned short sp;
 	unsigned hf1, hf2, zf, cf;
-	unsigned char a_, b, c, d, e, /*f,*/ h, l;
+	unsigned char a, b, c, d, e, /*f,*/ h, l;
 	unsigned char opcode_;
 	bool prefetched_;
 
@@ -112,6 +122,11 @@ private:
 	int hitInterruptAddress;
 
 	void process(unsigned long cycles);
+
+	void (*tracecallback)(void *);
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

@@ -1,6 +1,8 @@
 #ifndef NEXT_M0_TIME_H_
 #define NEXT_M0_TIME_H_
 
+#include "newstate.h"
+
 namespace gambatte {
 
 class NextM0Time {
@@ -12,6 +14,9 @@ public:
 
 private:
 	unsigned long predictedNextM0Time_;
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

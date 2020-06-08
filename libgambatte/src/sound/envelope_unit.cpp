@@ -18,7 +18,6 @@
 
 #include "envelope_unit.h"
 #include "psgdef.h"
-
 #include <algorithm>
 
 using namespace gambatte;
@@ -34,11 +33,6 @@ EnvelopeUnit::EnvelopeUnit(VolOnOffEvent &volOnOffEvent)
 
 void EnvelopeUnit::reset() {
 	counter_ = counter_disabled;
-}
-
-void EnvelopeUnit::saveState(SaveState::SPU::Env &estate) const {
-	estate.counter = counter_;
-	estate.volume = volume_;
 }
 
 void EnvelopeUnit::loadState(SaveState::SPU::Env const &estate, unsigned nr2, unsigned long cc) {
@@ -63,9 +57,11 @@ void EnvelopeUnit::event() {
 				volOnOffEvent_(counter_);
 
 			counter_ += period << 15;
-		} else
+		}
+		else
 			counter_ = counter_disabled;
-	} else
+	}
+	else
 		counter_ += 8ul << 15;
 }
 
@@ -93,4 +89,11 @@ bool EnvelopeUnit::nr4Init(unsigned long const cc) {
 
 	volume_ = nr2_ / (1u * psg_nr2_initvol & -psg_nr2_initvol);
 	return !(nr2_ & (psg_nr2_initvol | psg_nr2_inc));
+}
+
+SYNCFUNC(EnvelopeUnit)
+{
+	NSS(counter_);
+	NSS(nr2_);
+	NSS(volume_);
 }

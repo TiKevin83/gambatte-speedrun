@@ -1,10 +1,9 @@
-#ifndef MSTAT_IRQ_H
-#define MSTAT_IRQ_H
+#ifndef M0_IRQ_H
+#define M0_IRQ_H
 
 #include "lcddef.h"
 #include "../savestate.h"
-
-#include <algorithm>
+#include "../newstate.h"
 
 namespace gambatte {
 
@@ -14,13 +13,13 @@ public:
 	void lcdReset(unsigned lycReg) { lycReg_ = lycReg; }
 
 	void lycRegChange(unsigned lycReg, unsigned long nextM0IrqTime,
-			unsigned long nextM2IrqTime, unsigned long cc, bool ds, bool cgb) {
+		unsigned long nextM2IrqTime, unsigned long cc, bool ds, bool cgb) {
 		if (cc + 5 * cgb + 1 - ds < std::min(nextM0IrqTime, nextM2IrqTime))
 			lycReg_ = lycReg;
 	}
 
 	void statRegChange(unsigned statReg, unsigned long nextM0IrqTime, unsigned long nextM1IrqTime,
-			unsigned long nextM2IrqTime, unsigned long cc, bool cgb) {
+		unsigned long nextM2IrqTime, unsigned long cc, bool cgb) {
 		if (cc + 2 * cgb < std::min(std::min(nextM0IrqTime, nextM1IrqTime), nextM2IrqTime))
 			statReg_ = statReg;
 	}
@@ -50,18 +49,22 @@ public:
 		return flagIrq;
 	}
 
-	void saveState(SaveState &state) const {
-		state.ppu.m0lyc = lycReg_;
-	}
-
-	void loadState(SaveState const &state) {
+	void loadState(SaveState const& state) {
 		lycReg_ = state.ppu.m0lyc;
 		statReg_ = state.mem.ioamhram.get()[0x141];
 	}
 
 private:
-	unsigned char lycReg_;
 	unsigned char statReg_;
+	unsigned char lycReg_;
+
+public:
+	template<bool isReader>
+	void SyncState(NewState *ns)
+	{
+		NSS(statReg_);
+		NSS(lycReg_);
+	}
 };
 
 }

@@ -21,11 +21,8 @@
 #include "savestate.h"
 #include "sound/sound_unit.h"
 #include "mem/time.h"
-
 #include <algorithm>
 #include <cstring>
-#include <ctime>
-#include <iostream>
 
 namespace {
 
@@ -1150,7 +1147,7 @@ static void setInitialDmgIoamhram(unsigned char ioamhram[]) {
 
 } // anon namespace
 
-void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
+void gambatte::setInitState(SaveState &state, const bool cgb) {
 	static unsigned char const cgbObjpDump[0x40] = {
 		0x00, 0x00, 0xF2, 0xAB,
 		0x61, 0xC2, 0xD9, 0xBA,
@@ -1170,8 +1167,6 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
 		0x83, 0x40, 0x0B, 0x77
 	};
 
-	unsigned long cc = state.cpu.cycleCounter;
-
 	state.cpu.cycleCounter = 8;
 	state.cpu.pc = 0;
 	state.cpu.sp = 0;
@@ -1187,6 +1182,8 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
 	state.cpu.prefetched = false;
 	state.cpu.skip = false;
 	state.mem.biosMode = true;
+
+	std::memset(state.mem.sram.ptr, 0xFF, state.mem.sram.size());
 
 	setInitialVram(state.mem.vram.ptr, cgb);
 
@@ -1225,33 +1222,6 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
 	state.mem.hdmaTransfer = false;
 	state.mem.stopped = false;
 
-
-	std::memset(state.mem.sgb.systemColors.ptr, 0, state.mem.sgb.systemColors.size() * 2);
-	std::memset(state.mem.sgb.colors.ptr, 0, state.mem.sgb.colors.size() * 2);
-	std::memset(state.mem.sgb.attributes.ptr, 0, state.mem.sgb.attributes.size());
-	std::memset(state.mem.sgb.packet.ptr, 0, state.mem.sgb.packet.size());
-	std::memset(state.mem.sgb.command.ptr, 0, state.mem.sgb.command.size());
-
-	if (sgb) {
-		state.mem.sgb.colors.ptr[0] = 0x67BF;
-
-		for (int i = 0; i < 16; i += 4) {
-			state.mem.sgb.colors.ptr[i + 1] = 0x265B;
-			state.mem.sgb.colors.ptr[i + 2] = 0x10B5;
-			state.mem.sgb.colors.ptr[i + 3] = 0x2866;
-		}
-	}
-
-	state.mem.sgb.transfer = 0xFF;
-	state.mem.sgb.commandIndex = 0;
-	state.mem.sgb.joypadIndex = 0;
-	state.mem.sgb.joypadMask = 0;
-	state.mem.sgb.pending = 0xFF;
-	state.mem.sgb.pendingCount = 0;
-	state.mem.sgb.mask = 0;
-
-	for (int i = 0; i < 3 * 4; ++i)
-		state.ppu.dmgColorsBgr15.ptr[i] = (3 - (i & 3)) * 0x294A + !(i & 3) * 0x421;
 
 	for (int i = 0x00; i < 0x40; i += 0x02) {
 		state.ppu.bgpData.ptr[i    ] = 0xFF;
@@ -1348,7 +1318,10 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
 	state.spu.ch4.nr4 = 0;
 	state.spu.ch4.master = false;
 
-	state.time.lastCycles = state.time.lastCycles - (cc - state.cpu.cycleCounter);
+	state.time.seconds = 0;
+	state.time.lastTimeSec = Time::now().tv_sec;
+	state.time.lastTimeUsec = Time::now().tv_usec;
+	state.time.lastCycles = state.cpu.cycleCounter;
 
 	state.rtc.haltTime = state.time.seconds;
 	state.rtc.dataDh = 0;
@@ -1357,7 +1330,7 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
 	state.rtc.dataM = 0;
 	state.rtc.dataS = 0;
 	state.rtc.lastLatchData = false;
-    
+
 	state.huc3.haltTime = state.time.seconds;
 	state.huc3.dataTime = 0;
 	state.huc3.writingTime = 0;
@@ -1365,13 +1338,4 @@ void gambatte::setInitState(SaveState &state, bool const cgb, bool const sgb) {
 	state.huc3.shift = 0;
 	state.huc3.ramValue = 1;
 	state.huc3.modeflag = 2; // huc3_none
-}
-
-void gambatte::setInitStateCart(SaveState &state) {
-	std::memset(state.mem.sram.ptr, 0xFF, state.mem.sram.size());
-
-	state.time.seconds = 0;
-	state.time.lastTimeSec = Time::now().tv_sec;
-	state.time.lastTimeUsec = Time::now().tv_usec;
-	state.time.lastCycles = state.cpu.cycleCounter;
 }

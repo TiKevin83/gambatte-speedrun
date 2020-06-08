@@ -19,47 +19,60 @@
 #ifndef TIME_H
 #define TIME_H
 
+#include <chrono>
+#include <cstdint>
 #include <ctime>
-#include <sys/time.h>
+#include "newstate.h"
 
 namespace gambatte {
 
 struct SaveState;
 
+struct timeval {
+	std::uint32_t tv_sec;
+	std::uint32_t tv_usec;
+};
+
 class Time {
 public:
 	static timeval now() {
+		long long micros = std::chrono::duration_cast<std::chrono::microseconds>(
+				std::chrono::high_resolution_clock::now().time_since_epoch())
+			.count();
 		timeval t;
-		gettimeofday(&t, 0);
+		t.tv_usec = micros % 1000000;
+		t.tv_sec = micros / 1000000;
 		return t;
 	}
 
 	Time();
-	void saveState(SaveState &state, unsigned long cycleCounter);
 	void loadState(SaveState const &state);
 
-	std::time_t get(unsigned long cycleCounter);
-	void set(std::time_t seconds, unsigned long cycleCounter);
-	void reset(std::time_t seconds, unsigned long cycleCounter);
+	std::uint32_t get(unsigned long cycleCounter);
+	void set(std::uint32_t seconds, unsigned long cycleCounter);
+	void reset(std::uint32_t seconds, unsigned long cycleCounter);
 	void resetCc(unsigned long oldCc, unsigned long newCc);
 	void speedChange(unsigned long cycleCounter);
 
 	timeval baseTime(unsigned long cycleCounter);
 	void setBaseTime(timeval baseTime, unsigned long cycleCounter);
 	void setTimeMode(bool useCycles, unsigned long cycleCounter);
-
-	unsigned timeNow(unsigned long cycleCounter) const;
+	void setRtcDivisorOffset(long const rtcDivisorOffset) { rtcDivisor_ = 0x400000L + rtcDivisorOffset; }
 
 private:
-	std::time_t seconds_;
+	std::uint32_t seconds_;
 	timeval lastTime_;
 	unsigned long lastCycles_;
 	bool useCycles_;
+	unsigned long rtcDivisor_;
 	bool ds_;
 
 	void update(unsigned long cycleCounter);
 	void cyclesFromTime(unsigned long cycleCounter);
 	void timeFromCycles(unsigned long cycleCounter);
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

@@ -21,6 +21,7 @@
 
 #include "ly_counter.h"
 #include "../savestate.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -47,7 +48,7 @@ public:
 
 	void setLargeSpritesSource(bool src) { oamReader_.setLargeSpritesSrc(src); }
 
-	unsigned char const * sprites(unsigned ly) const {
+	unsigned char const* sprites(unsigned ly) const {
 		if (num_[ly] & need_sorting_flag)
 			sortLine(ly);
 
@@ -56,7 +57,6 @@ public:
 
 	void setStatePtrs(SaveState &state) { oamReader_.setStatePtrs(state); }
 	void enableDisplay(unsigned long cc) { oamReader_.enableDisplay(cc); }
-	void saveState(SaveState &state) const { oamReader_.saveState(state); }
 
 	void loadState(SaveState const &state, unsigned char const *oamram) {
 		oamReader_.loadState(state, oamram);
@@ -67,7 +67,7 @@ public:
 		return oamReader_.inactivePeriodAfterDisplayEnable(cc);
 	}
 
-	static unsigned long schedule(LyCounter const &lyCounter, unsigned long cc) {
+	static unsigned long schedule(LyCounter const& lyCounter, unsigned long cc) {
 		return lyCounter.nextLineCycle(2 * lcd_num_oam_entries, cc);
 	}
 
@@ -79,7 +79,7 @@ private:
 		void change(unsigned long cc);
 		void change(unsigned char const *oamram, unsigned long cc) { change(cc); oamram_ = oamram; }
 		bool changed() const { return lastChange_ != 0xFF; }
-		bool largeSprites(int spno) const { return lsbuf_[spno]; }
+		bool largeSprites(int spNo) const { return lsbuf_[spNo]; }
 		unsigned char const * oam() const { return oamram_; }
 		void resetCycleCounter(unsigned long oldCc, unsigned long newCc) { lu_ -= oldCc - newCc; }
 		void setLargeSpritesSrc(bool src) { largeSpritesSrc_ = src; }
@@ -87,7 +87,6 @@ private:
 		unsigned char const * spritePosBuf() const { return buf_; }
 		void setStatePtrs(SaveState &state);
 		void enableDisplay(unsigned long cc);
-		void saveState(SaveState &state) const { state.ppu.enableDisplayM0Time = lu_; }
 		void loadState(SaveState const &ss, unsigned char const *oamram);
 		bool inactivePeriodAfterDisplayEnable(unsigned long cc) const { return cc < lu_; }
 		unsigned lineTime() const { return lyCounter_.lineTime(); }
@@ -101,6 +100,9 @@ private:
 		unsigned char lastChange_;
 		bool largeSpritesSrc_;
 		bool cgb_;
+
+	public:
+		template<bool isReader>void SyncState(NewState *ns);
 	};
 
 	enum { need_sorting_flag = 0x80 };
@@ -113,6 +115,9 @@ private:
 	void clearMap();
 	void mapSprites();
 	void sortLine(unsigned ly) const;
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

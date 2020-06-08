@@ -20,6 +20,7 @@
 #define SAVESTATE_H
 
 #include <cstddef>
+#include <cstdint>
 
 namespace gambatte {
 
@@ -35,9 +36,7 @@ struct SaveState {
 		void set(T *p, std::size_t size) { ptr = p; size_ = size; }
 
 		friend class SaverList;
-		friend void setInitState(SaveState &, bool, bool);
-		friend void setInitStateCart(SaveState &);
-
+		friend void setInitState(SaveState &, bool);
 	private:
 		T *ptr;
 		std::size_t size_;
@@ -86,25 +85,9 @@ struct SaveState {
 		unsigned char /*bool*/ hdmaTransfer;
 		unsigned char /*bool*/ biosMode;
 		unsigned char /*bool*/ stopped;
-
-		struct SGB {
-			Ptr<unsigned short> systemColors;
-			Ptr<unsigned short> colors;
-			Ptr<unsigned char> attributes;
-			Ptr<unsigned char> packet;
-			Ptr<unsigned char> command;
-			unsigned char transfer;
-			unsigned char commandIndex;
-			unsigned char joypadIndex;
-			unsigned char joypadMask;
-			unsigned char pending;
-			unsigned char pendingCount;
-			unsigned char mask;
-		} sgb;
 	} mem;
 
 	struct PPU {
-		Ptr<unsigned short> dmgColorsBgr15;
 		Ptr<unsigned char> bgpData;
 		Ptr<unsigned char> objpData;
 		//SpriteMapper::OamReader
@@ -223,7 +206,7 @@ struct SaveState {
 		unsigned char dataS;
 		unsigned char /*bool*/ lastLatchData;
 	} rtc;
-    
+
 	struct HuC3 {
 		unsigned long haltTime;
 		unsigned long dataTime;

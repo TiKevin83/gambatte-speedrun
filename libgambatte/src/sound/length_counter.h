@@ -21,6 +21,7 @@
 
 #include "sound_unit.h"
 #include "../savestate.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -32,13 +33,15 @@ public:
 	virtual void event();
 	void nr1Change(unsigned newNr1, unsigned nr4, unsigned long cc);
 	void nr4Change(unsigned oldNr4, unsigned newNr4, unsigned long cc);
-	void saveState(SaveState::SPU::LCounter &lstate) const;
 	void loadState(SaveState::SPU::LCounter const &lstate, unsigned long cc);
 
 private:
 	MasterDisabler &disableMaster_;
 	unsigned short lengthCounter_;
 	unsigned char const lengthMask_;
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

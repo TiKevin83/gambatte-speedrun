@@ -19,7 +19,6 @@
 #include "channel1.h"
 #include "psgdef.h"
 #include "../savestate.h"
-
 #include <algorithm>
 
 using namespace gambatte;
@@ -64,7 +63,7 @@ void Channel1::SweepUnit::event() {
 }
 
 void Channel1::SweepUnit::nr0Change(unsigned newNr0) {
-	if (neg_ && !(newNr0 & psg_nr10_neg))
+	if (neg_ && !(newNr0 & 0x08))
 		disableMaster_();
 
 	nr0_ = newNr0;
@@ -90,18 +89,21 @@ void Channel1::SweepUnit::reset() {
 	counter_ = counter_disabled;
 }
 
-void Channel1::SweepUnit::saveState(SaveState &state) const {
-	state.spu.ch1.sweep.counter = counter_;
-	state.spu.ch1.sweep.shadow = shadow_;
-	state.spu.ch1.sweep.nr0 = nr0_;
-	state.spu.ch1.sweep.neg = neg_;
-}
-
 void Channel1::SweepUnit::loadState(SaveState const &state) {
 	counter_ = std::max(state.spu.ch1.sweep.counter, state.spu.cycleCounter);
 	shadow_ = state.spu.ch1.sweep.shadow;
 	nr0_ = state.spu.ch1.sweep.nr0;
 	neg_ = state.spu.ch1.sweep.neg;
+}
+
+template<bool isReader>
+void Channel1::SweepUnit::SyncState(NewState *ns)
+{
+	NSS(counter_);
+	NSS(shadow_);
+	NSS(nr0_);
+	NSS(neg_);
+	NSS(cgb_);
 }
 
 Channel1::Channel1()
@@ -184,16 +186,6 @@ void Channel1::init(bool cgb) {
 	sweepUnit_.init(cgb);
 }
 
-void Channel1::saveState(SaveState &state, unsigned long cc) {
-	sweepUnit_.saveState(state);
-	dutyUnit_.saveState(state.spu.ch1.duty, cc);
-	envelopeUnit_.saveState(state.spu.ch1.env);
-	lengthCounter_.saveState(state.spu.ch1.lcounter);
-
-	state.spu.ch1.nr4 = nr4_;
-	state.spu.ch1.master = master_;
-}
-
 void Channel1::loadState(SaveState const &state) {
 	sweepUnit_.loadState(state);
 	dutyUnit_.loadState(state.spu.ch1.duty, state.mem.ioamhram.get()[0x111],
@@ -206,7 +198,7 @@ void Channel1::loadState(SaveState const &state) {
 	master_ = state.spu.ch1.master;
 }
 
-void Channel1::update(uint_least32_t *buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
+void Channel1::update(uint_least32_t* buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
 	unsigned long const outBase = envelopeUnit_.dacIsOn() ? soBaseVol & soMask_ : 0;
 	unsigned long const outLow = outBase * -15;
 
@@ -243,4 +235,25 @@ void Channel1::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 		envelopeUnit_.resetCounters(cc);
 		sweepUnit_.resetCounters(cc);
 	}
+}
+
+SYNCFUNC(Channel1)
+{
+	SSS(lengthCounter_);
+	SSS(dutyUnit_);
+	SSS(envelopeUnit_);
+	SSS(sweepUnit_);
+
+	EBS(nextEventUnit_, 0);
+	EVS(nextEventUnit_, &dutyUnit_, 1);
+	EVS(nextEventUnit_, &sweepUnit_, 2);
+	EVS(nextEventUnit_, &envelopeUnit_, 3);
+	EVS(nextEventUnit_, &lengthCounter_, 4);
+	EES(nextEventUnit_, NULL);
+
+	NSS(soMask_);
+	NSS(prevOut_);
+
+	NSS(nr4_);
+	NSS(master_);
 }

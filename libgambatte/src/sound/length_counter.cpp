@@ -19,7 +19,6 @@
 #include "length_counter.h"
 #include "master_disabler.h"
 #include "psgdef.h"
-
 #include <algorithm>
 
 using namespace gambatte;
@@ -66,12 +65,13 @@ void LengthCounter::nr4Change(unsigned const oldNr4, unsigned const newNr4, unsi
 		: 1 * counter_disabled;
 }
 
-void LengthCounter::saveState(SaveState::SPU::LCounter &lstate) const {
-	lstate.counter = counter_;
-	lstate.lengthCounter = lengthCounter_;
-}
-
 void LengthCounter::loadState(SaveState::SPU::LCounter const &lstate, unsigned long const cc) {
 	counter_ = std::max(lstate.counter, cc);
 	lengthCounter_ = lstate.lengthCounter;
+}
+
+SYNCFUNC(LengthCounter)
+{
+	NSS(counter_);
+	NSS(lengthCounter_);
 }

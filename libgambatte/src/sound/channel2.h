@@ -24,6 +24,7 @@
 #include "gbint.h"
 #include "length_counter.h"
 #include "static_output_tester.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -38,10 +39,9 @@ public:
 	void setNr4(unsigned data, unsigned long cc, unsigned long ref);
 	void setSo(unsigned long soMask, unsigned long cc);
 	bool isActive() const { return master_; }
-	void update(uint_least32_t *buf, unsigned long soBaseVol, unsigned long cc, unsigned long end);
+	void update(uint_least32_t* buf, unsigned long soBaseVol, unsigned long cc, unsigned long end);
 	void reset();
 	void resetCc(unsigned long cc, unsigned long ncc) { dutyUnit_.resetCc(cc, ncc); }
-	void saveState(SaveState &state, unsigned long cc);
 	void loadState(SaveState const &state);
 
 private:
@@ -59,6 +59,9 @@ private:
 	bool master_;
 
 	void setEvent();
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

@@ -38,7 +38,6 @@ private:
 class Tima {
 public:
 	Tima();
-	void saveState(SaveState &) const;
 	void loadState(const SaveState &, TimaInterruptRequester timaIrq);
 	void resetCc(unsigned long oldCc, unsigned long newCc, TimaInterruptRequester timaIrq);
 	void setTima(unsigned tima, unsigned long cc, TimaInterruptRequester timaIrq);
@@ -64,6 +63,9 @@ private:
 	}
 
 	void updateTima(unsigned long cc);
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

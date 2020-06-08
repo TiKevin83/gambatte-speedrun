@@ -17,9 +17,7 @@
 //
 
 #include "sound.h"
-#include "gambatte.h"
 #include "savestate.h"
-
 #include <algorithm>
 #include <cstring>
 
@@ -55,7 +53,6 @@ PSG::PSG()
 , soVol_(0)
 , rsum_(0x8000) // initialize to 0x8000 to prevent borrows from high word, xor away later
 , enabled_(false)
-, speedupFlags_(0)
 {
 }
 
@@ -105,15 +102,6 @@ void PSG::setStatePtrs(SaveState &state) {
 	ch3_.setStatePtrs(state);
 }
 
-void PSG::saveState(SaveState &state) {
-	state.spu.cycleCounter = cycleCounter_;
-	state.spu.lastUpdate = (lastUpdate_ + 1) % 4;
-	ch1_.saveState(state, cycleCounter_);
-	ch2_.saveState(state, cycleCounter_);
-	ch3_.saveState(state);
-	ch4_.saveState(state, cycleCounter_);
-}
-
 void PSG::loadState(SaveState const &state) {
 	ch1_.loadState(state);
 	ch2_.loadState(state);
@@ -129,8 +117,8 @@ void PSG::loadState(SaveState const &state) {
 
 inline void PSG::accumulateChannels(unsigned long const cycles) {
 	unsigned long const cc = cycleCounter_;
-	uint_least32_t *const buf = buffer_ + bufferPos_;
-	std::memset(buf, 0, cycles * sizeof *buf);
+	uint_least32_t* const buf = buffer_ + bufferPos_;
+	std::memset(buf, 0, cycles * sizeof * buf);
 	ch1_.update(buf, soVol_, cc, cc + cycles);
 	ch2_.update(buf, soVol_, cc, cc + cycles);
 	ch3_.update(buf, soVol_, cc, cc + cycles);
@@ -142,10 +130,8 @@ void PSG::generateSamples(unsigned long const cpuCc, bool const doubleSpeed) {
 	unsigned long const cycles = (cpuCc - lastUpdate_) >> (1 + doubleSpeed);
 	lastUpdate_ += cycles << (1 + doubleSpeed);
 
-	if (!(speedupFlags_ & GB::NO_SOUND)) {
-		if (cycles)
-			accumulateChannels(cycles);
-	}
+	if (cycles)
+		accumulateChannels(cycles);
 
 	bufferPos_ += cycles;
 }
@@ -227,4 +213,18 @@ unsigned PSG::getStatus() const {
 	     | ch2_.isActive() << 1
 	     | ch3_.isActive() << 2
 	     | ch4_.isActive() << 3;
+}
+
+// the buffer and position are not saved, as they're set and flushed on each runfor() call
+SYNCFUNC(PSG)
+{
+	SSS(ch1_);
+	SSS(ch2_);
+	SSS(ch3_);
+	SSS(ch4_);
+	NSS(lastUpdate_);
+	NSS(cycleCounter_);
+	NSS(soVol_);
+	NSS(rsum_);
+	NSS(enabled_);
 }

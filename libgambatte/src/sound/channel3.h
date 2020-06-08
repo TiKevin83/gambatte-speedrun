@@ -22,6 +22,7 @@
 #include "gbint.h"
 #include "length_counter.h"
 #include "master_disabler.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -36,7 +37,6 @@ public:
 	void resetCc(unsigned long cc, unsigned long newCc);
 	void init(bool cgb);
 	void setStatePtrs(SaveState &state);
-	void saveState(SaveState &state) const;
 	void loadState(SaveState const &state);
 	void setNr0(unsigned data);
 	void setNr1(unsigned data, unsigned long cc) { lengthCounter_.nr1Change(data, nr4_, cc); }
@@ -44,7 +44,7 @@ public:
 	void setNr3(unsigned data) { nr3_ = data; }
 	void setNr4(unsigned data, unsigned long cc);
 	void setSo(unsigned long soMask);
-	void update(uint_least32_t *buf, unsigned long soBaseVol, unsigned long cc, unsigned long end);
+	void update(uint_least32_t* buf, unsigned long soBaseVol, unsigned long cc, unsigned long end);
 
 	unsigned waveRamRead(unsigned index, unsigned long cc) const {
 		if (master_) {
@@ -99,6 +99,10 @@ private:
 	bool cgb_;
 
 	void updateWaveCounter(unsigned long cc);
+
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

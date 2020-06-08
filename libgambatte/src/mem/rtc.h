@@ -19,7 +19,9 @@
 #ifndef RTC_H
 #define RTC_H
 
+#include <cstdint>
 #include "time.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -37,7 +39,6 @@ public:
 		lastLatchData_ = data;
 	}
 
-	void saveState(SaveState &state) const;
 	void loadState(SaveState const &state);
 
 	void set(bool enabled, unsigned bank) {
@@ -58,7 +59,7 @@ private:
 	Time &time_;
 	unsigned char *activeData_;
 	void (Rtc::*activeSet_)(unsigned, unsigned long);
-	std::time_t haltTime_;
+	std::uint32_t haltTime_;
 	unsigned char index_;
 	unsigned char dataDh_;
 	unsigned char dataDl_;
@@ -76,9 +77,11 @@ private:
 	void setM(unsigned newMinutes, unsigned long cycleCounter);
 	void setS(unsigned newSeconds, unsigned long cycleCounter);
 
-	std::time_t time(unsigned long const cc) {
+	std::uint32_t time(unsigned long const cc) {
 		return dataDh_ & 0x40 ? haltTime_ : time_.get(cc);
 	}
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

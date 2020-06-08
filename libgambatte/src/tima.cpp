@@ -22,10 +22,10 @@
 using namespace gambatte;
 
 namespace {
-
-unsigned char const timaClock[] = { 10, 4, 6, 8 };
-
+	unsigned char const timaClock[4] = { 10, 4, 6, 8 };
 }
+
+namespace gambatte {
 
 Tima::Tima()
 : divLastUpdate_(0)
@@ -35,12 +35,6 @@ Tima::Tima()
 , tma_(0)
 , tac_(0)
 {
-}
-
-void Tima::saveState(SaveState &state) const {
-	state.mem.divLastUpdate = divLastUpdate_;
-	state.mem.timaLastUpdate = lastUpdate_;
-	state.mem.tmatime = tmatime_;
 }
 
 void Tima::loadState(SaveState const &state, TimaInterruptRequester timaIrq) {
@@ -144,7 +138,6 @@ void Tima::setTac(unsigned const data, unsigned long const cc, TimaInterruptRequ
 		}
 
 		if (data & 4) {
-			// GSR NOTE: "timer quirk" (commit 144e4e9, since r649)
 			if (agbFlag) {
 				unsigned long diff = cc - divLastUpdate_;
 				if (((diff >> (timaClock[tac_ & 3] - 1)) & 1) == 1 && ((diff >> (timaClock[data & 3] - 1)) & 1) == 0)
@@ -195,4 +188,16 @@ void Tima::doIrqEvent(TimaInterruptRequester timaIrq) {
 	timaIrq.flagIrq(timaIrq.nextIrqEventTime());
 	timaIrq.setNextIrqEventTime(timaIrq.nextIrqEventTime()
 		+ ((256l - tma_) << timaClock[tac_ & 3]));
+}
+
+SYNCFUNC(Tima)
+{
+	NSS(lastUpdate_);
+	NSS(divLastUpdate_);
+	NSS(tmatime_);
+	NSS(tima_);
+	NSS(tma_);
+	NSS(tac_);
+}
+
 }

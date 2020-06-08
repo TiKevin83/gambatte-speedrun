@@ -21,27 +21,26 @@
 #include "lcddef.h"
 #include "ly_counter.h"
 #include "savestate.h"
-
 #include <algorithm>
 
 using namespace gambatte;
 
 namespace {
 
-unsigned long schedule(unsigned statReg,
-		unsigned lycReg, LyCounter const &lyCounter, unsigned long cc) {
-	return (statReg & lcdstat_lycirqen) && lycReg < lcd_lines_per_frame
-	? lyCounter.nextFrameCycle(lycReg
-		? 1l * lycReg * lcd_cycles_per_line - 2
-		: (lcd_lines_per_frame - 1l) * lcd_cycles_per_line + 6, cc)
-	: 1 * disabled_time;
-}
+	unsigned long schedule(unsigned statReg,
+		unsigned lycReg, LyCounter const& lyCounter, unsigned long cc) {
+		return (statReg & lcdstat_lycirqen) && lycReg < lcd_lines_per_frame
+			? lyCounter.nextFrameCycle(lycReg
+				? 1l * lycReg * lcd_cycles_per_line - 2
+				: (lcd_lines_per_frame - 1l) * lcd_cycles_per_line + 6, cc)
+			: 1 * disabled_time;
+	}
 
-bool lycIrqBlockedByM2OrM1StatIrq(unsigned ly, unsigned statreg) {
-	return ly <= lcd_vres && ly > 0
-	? statreg & lcdstat_m2irqen
-	: statreg & lcdstat_m1irqen;
-}
+	bool lycIrqBlockedByM2OrM1StatIrq(unsigned ly, unsigned statreg) {
+		return ly <= lcd_vres && ly > 0
+			? statreg & lcdstat_m2irqen
+			: statreg & lcdstat_m1irqen;
+	}
 
 }
 
@@ -56,7 +55,7 @@ LycIrq::LycIrq()
 }
 
 void LycIrq::regChange(unsigned const statReg,
-		unsigned const lycReg, LyCounter const &lyCounter, unsigned long const cc) {
+	unsigned const lycReg, LyCounter const& lyCounter, unsigned long const cc) {
 	unsigned long const timeSrc = schedule(statReg, lycReg, lyCounter, cc);
 	statRegSrc_ = statReg;
 	lycRegSrc_ = lycReg;
@@ -67,7 +66,8 @@ void LycIrq::regChange(unsigned const statReg,
 			lycReg_ = lycReg;
 		if (time_ - cc > 2)
 			statReg_ = statReg;
-	} else {
+	}
+	else {
 		if (time_ - cc > 4 || timeSrc != time_)
 			lycReg_ = lycReg;
 
@@ -75,7 +75,7 @@ void LycIrq::regChange(unsigned const statReg,
 	}
 }
 
-bool LycIrq::doEvent(LyCounter const &lyCounter) {
+bool LycIrq::doEvent(LyCounter const& lyCounter) {
 	bool flagIrq = false;
 	if ((statReg_ | statRegSrc_) & lcdstat_lycirqen) {
 		unsigned const cmpLy = lyCounter.ly() == lcd_lines_per_frame - 1
@@ -97,10 +97,6 @@ void LycIrq::loadState(SaveState const &state) {
 	statReg_ = statRegSrc_;
 }
 
-void LycIrq::saveState(SaveState &state) const {
-	state.ppu.lyc = lycReg_;
-}
-
 void LycIrq::reschedule(LyCounter const &lyCounter, unsigned long cc) {
 	time_ = std::min(schedule(statReg_   , lycReg_   , lyCounter, cc),
 	                 schedule(statRegSrc_, lycRegSrc_, lyCounter, cc));
@@ -109,4 +105,14 @@ void LycIrq::reschedule(LyCounter const &lyCounter, unsigned long cc) {
 void LycIrq::lcdReset() {
 	statReg_ = statRegSrc_;
 	lycReg_ = lycRegSrc_;
+}
+
+SYNCFUNC(LycIrq)
+{
+	NSS(time_);
+	NSS(lycRegSrc_);
+	NSS(statRegSrc_);
+	NSS(lycReg_);
+	NSS(statReg_);
+	NSS(cgb_);
 }

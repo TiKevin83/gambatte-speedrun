@@ -24,6 +24,7 @@
 #include "length_counter.h"
 #include "master_disabler.h"
 #include "static_output_tester.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -38,10 +39,9 @@ public:
 	void setNr4(unsigned data, unsigned long cc);
 	void setSo(unsigned long soMask, unsigned long cc);
 	bool isActive() const { return master_; }
-	void update(uint_least32_t *buf, unsigned long soBaseVol, unsigned long cc, unsigned long end);
+	void update(uint_least32_t* buf, unsigned long soBaseVol, unsigned long cc, unsigned long end);
 	void reset(unsigned long cc);
 	void resetCc(unsigned long cc, unsigned long newCc) { lfsr_.resetCc(cc, newCc); }
-	void saveState(SaveState &state, unsigned long cc);
 	void loadState(SaveState const &state);
 
 private:
@@ -55,7 +55,6 @@ private:
 		void nr4Init(unsigned long cc);
 		void reset(unsigned long cc);
 		void resetCc(unsigned long cc, unsigned long newCc);
-		void saveState(SaveState &state, unsigned long cc);
 		void loadState(SaveState const &state);
 		void disableMaster() { killCounter(); master_ = false; reg_ = 0x7FFF; }
 		void killCounter() { counter_ = counter_disabled; }
@@ -68,6 +67,9 @@ private:
 		bool master_;
 
 		void updateBackupCounter(unsigned long cc);
+
+	public:
+		template<bool isReader>void SyncState(NewState *ns);
 	};
 
 	class Ch4MasterDisabler : public MasterDisabler {
@@ -93,6 +95,9 @@ private:
 	bool master_;
 
 	void setEvent();
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

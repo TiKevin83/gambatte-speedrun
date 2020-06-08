@@ -18,7 +18,7 @@
 
 #include "huc3.h"
 #include "../savestate.h"
-//#include <stdio.h>
+#include <stdio.h>
 
 namespace gambatte {
 
@@ -40,24 +40,24 @@ HuC3Chip::HuC3Chip(Time &time)
 }
 
 void HuC3Chip::doLatch(unsigned long const cc) {
-	std::time_t tmp = time(cc);
+	std::uint32_t tmp = time(cc);
     
 	unsigned minute = (tmp / 60) % 1440;
 	unsigned day = (tmp / 86400) & 0xFFF;
 	dataTime_ = (day << 12) | minute;
 }
 
-void HuC3Chip::saveState(SaveState &state) const {
-	state.huc3.haltTime = haltTime_;
-	state.huc3.dataTime = dataTime_;
-	state.huc3.writingTime = writingTime_;
-	state.huc3.ramValue = ramValue_;
-	state.huc3.shift = shift_;
-	state.huc3.halted = halted_;
-	state.huc3.modeflag = modeflag_;
-	state.huc3.irBaseCycle = irBaseCycle_;
-	state.huc3.irReceivingPulse = irReceivingPulse_;
-}
+//void HuC3Chip::setStatePtrs(SaveState &state) {
+//	state.huc3.haltTime.set(haltTime_, sizeof  haltTime_);
+//	state.huc3.dataTime.set(dataTime_, sizeof  dataTime_);
+//	state.huc3.writingTime.set(writingTime_, sizeof  writingTime_);
+//	state.huc3.irBaseCycle.set(irBaseCycle_, sizeof  irBaseCycle_);
+//	state.huc3.halted.set(halted_, sizeof  halted_);
+//	state.huc3.shift.set(shift_, sizeof  shift_);
+//	state.huc3.ramValue.set(ramValue_, sizeof  ramValue_);
+//	state.huc3.modeflag.set(modeflag_, sizeof  modeflag_);
+//	state.huc3.irReceivingPulse.set(irReceivingPulse_, sizeof  irReceivingPulse_);
+//}
 
 void HuC3Chip::loadState(SaveState const &state) {
 	haltTime_ = state.huc3.haltTime;
@@ -180,10 +180,22 @@ void HuC3Chip::write(unsigned /*p*/, unsigned data, unsigned long const cc) {
 void HuC3Chip::updateTime(unsigned long const cc) {
 	unsigned minute = (writingTime_ & 0xFFF) % 1440;
 	unsigned day = (writingTime_ & 0xFFF000) >> 12;
-	std::time_t seconds = minute*60 + day*86400;
+	std::uint32_t seconds = minute*60 + day*86400;
 	time_.reset(seconds, cc);
 	haltTime_ = seconds;
     
 }
-
+SYNCFUNC(HuC3Chip)
+{
+	NSS(haltTime_);
+	NSS(dataTime_);
+	NSS(writingTime_);
+	NSS(ramValue_);
+	NSS(shift_);
+	NSS(halted_);
+	NSS(modeflag_);
+	NSS(irBaseCycle_);
+	NSS(irReceivingPulse_);
 }
+}
+

@@ -19,25 +19,22 @@
 #include "channel4.h"
 #include "psgdef.h"
 #include "../savestate.h"
-
 #include <algorithm>
 
 using namespace gambatte;
 
 namespace {
+	static unsigned long toPeriod(unsigned const nr3) {
+		unsigned s = nr3 / (1u * psg_nr43_s & -psg_nr43_s) + 3;
+		unsigned r = nr3 & psg_nr43_r;
 
-unsigned long toPeriod(unsigned const nr3) {
-	unsigned s = nr3 / (1u * psg_nr43_s & -psg_nr43_s) + 3;
-	unsigned r = nr3 & psg_nr43_r;
+		if (!r) {
+			r = 1;
+			--s;
+		}
 
-	if (!r) {
-		r = 1;
-		--s;
+		return r << s;
 	}
-
-	return r << s;
-}
-
 }
 
 Channel4::Lfsr::Lfsr()
@@ -64,7 +61,8 @@ void Channel4::Lfsr::updateBackupCounter(unsigned long const cc) {
 
 				unsigned const xored = ((reg_ ^ reg_ >> 1) << (7 - periods)) & 0x7F;
 				reg_ = (reg_ >> periods & ~(0x80u - (0x80 >> periods))) | xored | xored << 8;
-			} else {
+			}
+			else {
 				while (periods > 15) {
 					reg_ = reg_ ^ reg_ >> 1;
 					periods -= 15;
@@ -98,9 +96,6 @@ inline void Channel4::Lfsr::event() {
 void Channel4::Lfsr::nr3Change(unsigned newNr3, unsigned long cc) {
 	updateBackupCounter(cc);
 	nr3_ = newNr3;
-	
-	// GSR NOTE: See "Mickey fix" pull request for info
-	// https://github.com/pokemon-speedrunning/gambatte-speedrun/pull/27
 	counter_ = cc;
 }
 
@@ -125,14 +120,10 @@ void Channel4::Lfsr::resetCc(unsigned long cc, unsigned long newCc) {
 		counter_ -= cc - newCc;
 }
 
-void Channel4::Lfsr::resetCounters(unsigned long cc) {
-	resetCc(cc, cc - counter_max);
-}
-
-void Channel4::Lfsr::saveState(SaveState &state, unsigned long cc) {
-	updateBackupCounter(cc);
-	state.spu.ch4.lfsr.counter = backupCounter_;
-	state.spu.ch4.lfsr.reg = reg_;
+void Channel4::Lfsr::resetCounters(unsigned long oldCc) {
+	updateBackupCounter(oldCc);
+	backupCounter_ -= counter_max;
+	SoundUnit::resetCounters(oldCc);
 }
 
 void Channel4::Lfsr::loadState(SaveState const &state) {
@@ -140,6 +131,16 @@ void Channel4::Lfsr::loadState(SaveState const &state) {
 	reg_ = state.spu.ch4.lfsr.reg;
 	master_ = state.spu.ch4.master;
 	nr3_ = state.mem.ioamhram.get()[0x122];
+}
+
+template<bool isReader>
+void Channel4::Lfsr::SyncState(NewState *ns)
+{
+	NSS(counter_);
+	NSS(backupCounter_);
+	NSS(reg_);
+	NSS(nr3_);
+	NSS(master_);
 }
 
 Channel4::Channel4()
@@ -204,15 +205,6 @@ void Channel4::reset(unsigned long cc) {
 	setEvent();
 }
 
-void Channel4::saveState(SaveState &state, unsigned long cc) {
-	lfsr_.saveState(state, cc);
-	envelopeUnit_.saveState(state.spu.ch4.env);
-	lengthCounter_.saveState(state.spu.ch4.lcounter);
-
-	state.spu.ch4.nr4 = nr4_;
-	state.spu.ch4.master = master_;
-}
-
 void Channel4::loadState(SaveState const &state) {
 	lfsr_.loadState(state);
 	envelopeUnit_.loadState(state.spu.ch4.env, state.mem.ioamhram.get()[0x121],
@@ -223,7 +215,7 @@ void Channel4::loadState(SaveState const &state) {
 	master_ = state.spu.ch4.master;
 }
 
-void Channel4::update(uint_least32_t *buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
+void Channel4::update(uint_least32_t* buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
 	unsigned long const outBase = envelopeUnit_.dacIsOn() ? soBaseVol & soMask_ : 0;
 	unsigned long const outLow = outBase * -15;
 
@@ -260,4 +252,23 @@ void Channel4::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 		lfsr_.resetCounters(cc);
 		envelopeUnit_.resetCounters(cc);
 	}
+}
+
+SYNCFUNC(Channel4)
+{
+	SSS(lengthCounter_);
+	SSS(envelopeUnit_);
+	SSS(lfsr_);
+
+	EBS(nextEventUnit_, 0);
+	EVS(nextEventUnit_, &lfsr_, 1);
+	EVS(nextEventUnit_, &envelopeUnit_, 2);
+	EVS(nextEventUnit_, &lengthCounter_, 3);
+	EES(nextEventUnit_, NULL);
+
+	NSS(soMask_);
+	NSS(prevOut_);
+
+	NSS(nr4_);
+	NSS(master_);
 }

@@ -18,8 +18,6 @@ enum LoadRes {
 	LOADRES_OK = 0
 };
 
-std::string const to_string(LoadRes);
-
 }
 
 #endif

@@ -21,6 +21,7 @@
 
 #include "counterdef.h"
 #include "minkeeper.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -39,10 +40,10 @@ enum IntEventId { intevent_unhalt,
 class InterruptRequester {
 public:
 	InterruptRequester();
-	void saveState(SaveState &) const;
 	void loadState(SaveState const &);
 	void resetCc(unsigned long oldCc, unsigned long newCc);
 	unsigned ifreg() const { return ifreg_; }
+	unsigned iereg() const { return iereg_; }
 	unsigned pendingIrqs() const { return ifreg_ & iereg_; }
 	bool ime() const { return intFlags_.ime(); }
 	bool halted() const { return intFlags_.halted(); }
@@ -65,6 +66,7 @@ public:
 
 private:
 	class IntFlags {
+		friend class InterruptRequester;
 	public:
 		IntFlags() : flags_(0) {}
 		bool ime() const { return flags_ & flag_ime; }
@@ -86,6 +88,10 @@ private:
 	unsigned ifreg_;
 	unsigned iereg_;
 	IntFlags intFlags_;
+
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 inline void flagHdmaReq(InterruptRequester &intreq) { intreq.setEventTime<intevent_dma>(0); }

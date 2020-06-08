@@ -18,6 +18,7 @@
 
 #include "rtc.h"
 #include "../savestate.h"
+#include <cstdlib>
 
 namespace gambatte {
 
@@ -38,7 +39,7 @@ Rtc::Rtc(Time &time)
 }
 
 void Rtc::doLatch(unsigned long const cc) {
-	std::time_t tmp = time(cc);
+	std::uint32_t tmp = time(cc);
 
 	if (tmp >= 0x200 * 86400) {
 		tmp %= 0x200 * 86400;
@@ -88,16 +89,6 @@ void Rtc::doSwapActive() {
 	}
 }
 
-void Rtc::saveState(SaveState &state) const {
-	state.rtc.haltTime = haltTime_;
-	state.rtc.dataDh = dataDh_;
-	state.rtc.dataDl = dataDl_;
-	state.rtc.dataH = dataH_;
-	state.rtc.dataM = dataM_;
-	state.rtc.dataS = dataS_;
-	state.rtc.lastLatchData = lastLatchData_;
-}
-
 void Rtc::loadState(SaveState const &state) {
 	haltTime_ = state.rtc.haltTime;
 	dataDh_ = state.rtc.dataDh;
@@ -110,8 +101,8 @@ void Rtc::loadState(SaveState const &state) {
 }
 
 void Rtc::setDh(unsigned const newDh, unsigned const long cc) {
-	std::time_t seconds = time(cc);
-	std::time_t const oldHighdays = (seconds / 86400) & 0x100;
+	std::uint32_t seconds = time(cc);
+	std::uint32_t const oldHighdays = (seconds / 86400) & 0x100;
 	seconds -= oldHighdays * 86400;
 	seconds += ((newDh & 0x1) << 8) * 86400;
 	time_.set(seconds, cc);
@@ -125,34 +116,63 @@ void Rtc::setDh(unsigned const newDh, unsigned const long cc) {
 }
 
 void Rtc::setDl(unsigned const newLowdays, unsigned const long cc) {
-	std::time_t seconds = time(cc);
-	std::time_t const oldLowdays = (seconds / 86400) & 0xFF;
+	std::uint32_t seconds = time(cc);
+	std::uint32_t const oldLowdays = (seconds / 86400) & 0xFF;
 	seconds -= oldLowdays * 86400;
 	seconds += newLowdays * 86400;
 	time_.set(seconds, cc);
 }
 
 void Rtc::setH(unsigned const newHours, unsigned const long cc) {
-	std::time_t seconds = time(cc);
-	std::time_t const oldHours = (seconds / 3600) % 24;
+	std::uint32_t seconds = time(cc);
+	std::uint32_t const oldHours = (seconds / 3600) % 24;
 	seconds -= oldHours * 3600;
 	seconds += newHours * 3600;
 	time_.set(seconds, cc);
 }
 
 void Rtc::setM(unsigned const newMinutes, unsigned const long cc) {
-	std::time_t seconds = time(cc);
-	std::time_t const oldMinutes = (seconds / 60) % 60;
+	std::uint32_t seconds = time(cc);
+	std::uint32_t const oldMinutes = (seconds / 60) % 60;
 	seconds -= oldMinutes * 60;
 	seconds += newMinutes * 60;
 	time_.set(seconds, cc);
 }
 
 void Rtc::setS(unsigned const newSeconds, unsigned const long cc) {
-	std::time_t seconds = time(cc);
+	std::uint32_t seconds = time(cc);
 	seconds -= seconds % 60;
 	seconds += newSeconds;
 	time_.reset(seconds, cc);
+}
+
+SYNCFUNC(Rtc)
+{
+	EBS(activeData_, 0);
+	EVS(activeData_, &dataS_, 1);
+	EVS(activeData_, &dataM_, 2);
+	EVS(activeData_, &dataH_, 3);
+	EVS(activeData_, &dataDl_, 4);
+	EVS(activeData_, &dataDh_, 5);
+	EES(activeData_, NULL);
+
+	EBS(activeSet_, 0);
+	EVS(activeSet_, &Rtc::setS, 1);
+	EVS(activeSet_, &Rtc::setM, 2);
+	EVS(activeSet_, &Rtc::setH, 3);
+	EVS(activeSet_, &Rtc::setDl, 4);
+	EVS(activeSet_, &Rtc::setDh, 5);
+	EES(activeSet_, NULL);
+
+	NSS(haltTime_);
+	NSS(index_);
+	NSS(dataDh_);
+	NSS(dataDl_);
+	NSS(dataH_);
+	NSS(dataM_);
+	NSS(dataS_);
+	NSS(enabled_);
+	NSS(lastLatchData_);
 }
 
 }

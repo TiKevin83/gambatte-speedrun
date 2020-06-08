@@ -18,20 +18,19 @@
 
 #include "duty_unit.h"
 #include "psgdef.h"
-
 #include <algorithm>
 
 namespace {
 
-int const duty_pattern_len = 8;
+	int const duty_pattern_len = 8;
 
-bool toOutState(unsigned duty, unsigned pos) {
-	return 0x7EE18180 >> (duty * duty_pattern_len + pos) & 1;
-}
+	bool toOutState(unsigned duty, unsigned pos) {
+		return 0x7EE18180 >> (duty * duty_pattern_len + pos) & 1;
+	}
 
-unsigned toPeriod(unsigned freq) {
-	return (2048 - freq) * 2;
-}
+	unsigned toPeriod(unsigned freq) {
+		return (2048 - freq) * 2;
+	}
 
 }
 
@@ -106,7 +105,6 @@ void DutyUnit::nr3Change(unsigned newNr3, unsigned long cc) {
 	setFreq((freq() & 0x700) | newNr3, cc);
 }
 
-// GSR NOTE: `master` is required to get 4 sound/ch1_init_pos* hwtests to pass; upstream passes them by happenstance
 void DutyUnit::nr4Change(unsigned const newNr4, unsigned long const cc, unsigned long const ref, bool const master) {
 	setFreq((newNr4 << 8 & 0x700) | (freq() & 0xFF), cc);
 
@@ -132,19 +130,10 @@ void DutyUnit::resetCc(unsigned long cc, unsigned long newCc) {
 	setCounter();
 }
 
-void DutyUnit::saveState(SaveState::SPU::Duty &dstate, unsigned long const cc) {
-	updatePos(cc);
-	setCounter();
-	dstate.nextPosUpdate = nextPosUpdate_;
-	dstate.nr3 = freq() & 0xFF;
-	dstate.pos = pos_;
-	dstate.high = high_;
-}
-
 void DutyUnit::loadState(SaveState::SPU::Duty const &dstate,
 		unsigned const nr1, unsigned const nr4, unsigned long const cc) {
 	nextPosUpdate_ = std::max(dstate.nextPosUpdate, cc);
-	pos_ = dstate.pos % duty_pattern_len;
+	pos_ = dstate.pos & 7;
 	high_ = dstate.high;
 	duty_ = nr1 >> 6;
 	period_ = toPeriod((nr4 << 8 & 0x700) | dstate.nr3);
@@ -165,4 +154,16 @@ void DutyUnit::reviveCounter(unsigned long const cc) {
 	updatePos(cc);
 	enableEvents_ = true;
 	setCounter();
+}
+
+SYNCFUNC(DutyUnit)
+{
+	NSS(counter_);
+	NSS(nextPosUpdate_);
+	NSS(period_);
+	NSS(pos_);
+	NSS(duty_);
+	NSS(inc_);
+	NSS(high_);
+	NSS(enableEvents_);
 }

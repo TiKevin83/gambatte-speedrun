@@ -29,12 +29,6 @@ InterruptRequester::InterruptRequester()
 {
 }
 
-void InterruptRequester::saveState(SaveState &state) const {
-	state.mem.minIntTime = minIntTime_;
-	state.mem.IME = ime();
-	state.mem.halted = halted();
-}
-
 void InterruptRequester::loadState(SaveState const &state) {
 	minIntTime_ = state.mem.minIntTime;
 	ifreg_ = state.mem.ioamhram.get()[0x10F];
@@ -124,6 +118,15 @@ void InterruptRequester::setMinIntTime(unsigned long cc) {
 
 	if (eventTimes_.value(intevent_interrupts) < minIntTime_)
 		eventTimes_.setValue<intevent_interrupts>(minIntTime_);
+}
+
+SYNCFUNC(InterruptRequester)
+{
+	SSS(eventTimes_);
+	NSS(minIntTime_);
+	NSS(ifreg_);
+	NSS(iereg_);
+	NSS(intFlags_.flags_);
 }
 
 }

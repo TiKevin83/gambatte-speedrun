@@ -20,7 +20,6 @@
 #include "counterdef.h"
 #include "next_m0_time.h"
 #include "../insertion_sort.h"
-
 #include <algorithm>
 
 using namespace gambatte;
@@ -39,7 +38,7 @@ private:
 	unsigned char const *const spxlut_;
 };
 
-unsigned toPosCycles(unsigned long const cc, LyCounter const &lyCounter) {
+unsigned toPosCycles(unsigned long const cc, LyCounter const& lyCounter) {
 	unsigned lc = lyCounter.lineCycles(cc) + 1;
 	if (lc >= lcd_cycles_per_line)
 		lc -= lcd_cycles_per_line;
@@ -57,13 +56,13 @@ SpriteMapper::OamReader::OamReader(LyCounter const &lyCounter, unsigned char con
 	reset(oamram, false);
 }
 
-void SpriteMapper::OamReader::reset(unsigned char const *const oamram, bool const cgb) {
+void SpriteMapper::OamReader::reset(unsigned char const* const oamram, bool const cgb) {
 	oamram_ = oamram;
 	cgb_ = cgb;
 	setLargeSpritesSrc(false);
 	lu_ = 0;
 	lastChange_ = 0xFF;
-	std::fill_n(lsbuf_, sizeof lsbuf_ / sizeof *lsbuf_, largeSpritesSrc_);
+	std::fill_n(lsbuf_, sizeof lsbuf_ / sizeof * lsbuf_, largeSpritesSrc_);
 	for (int i = 0; i < lcd_num_oam_entries; ++i) {
 		buf_[2 * i] = oamram[4 * i];
 		buf_[2 * i + 1] = oamram[4 * i + 1];
@@ -101,7 +100,8 @@ void SpriteMapper::OamReader::update(unsigned long const cc) {
 
 					buf_[pos] = oamram_[2 * pos];
 					buf_[pos + 1] = oamram_[2 * pos + 1];
-				} else
+				}
+				else
 					lsbuf_[pos / 2] = (lsbuf_[pos / 2] & cgb_) | largeSpritesSrc_;
 
 				++pos;
@@ -117,21 +117,32 @@ void SpriteMapper::OamReader::change(unsigned long cc) {
 	lastChange_ = std::min(toPosCycles(lu_, lyCounter_), 2u * lcd_num_oam_entries);
 }
 
-void SpriteMapper::OamReader::setStatePtrs(SaveState &state) {
-	state.ppu.oamReaderBuf.set(buf_, sizeof buf_ / sizeof *buf_);
-	state.ppu.oamReaderSzbuf.set(lsbuf_, sizeof lsbuf_ / sizeof *lsbuf_);
+void SpriteMapper::OamReader::setStatePtrs(SaveState& state) {
+	state.ppu.oamReaderBuf.set(buf_, sizeof buf_ / sizeof * buf_);
+	state.ppu.oamReaderSzbuf.set(lsbuf_, sizeof lsbuf_ / sizeof * lsbuf_);
 }
 
-void SpriteMapper::OamReader::loadState(SaveState const &ss, unsigned char const *const oamram) {
+void SpriteMapper::OamReader::loadState(SaveState const& ss, unsigned char const* const oamram) {
 	oamram_ = oamram;
 	largeSpritesSrc_ = ss.mem.ioamhram.get()[0x140] >> 2 & 1;
 	lu_ = ss.ppu.enableDisplayM0Time;
 	change(lu_);
 }
 
+SYNCFUNC(SpriteMapper::OamReader)
+{
+	NSS(buf_);
+	NSS(lsbuf_);
+
+	NSS(lu_);
+	NSS(lastChange_);
+	NSS(largeSpritesSrc_);
+	NSS(cgb_);
+}
+
 void SpriteMapper::OamReader::enableDisplay(unsigned long cc) {
-	std::fill_n(buf_, sizeof buf_ / sizeof *buf_, 0);
-	std::fill_n(lsbuf_, sizeof lsbuf_ / sizeof *lsbuf_, false);
+	std::fill_n(buf_, sizeof buf_ / sizeof * buf_, 0);
+	std::fill_n(lsbuf_, sizeof lsbuf_ / sizeof * lsbuf_, false);
 	lu_ = cc + (2 * lcd_num_oam_entries << lyCounter_.isDoubleSpeed()) + 1;
 	lastChange_ = 2 * lcd_num_oam_entries;
 }
@@ -151,7 +162,7 @@ void SpriteMapper::reset(unsigned char const *oamram, bool cgb) {
 }
 
 void SpriteMapper::clearMap() {
-	std::fill_n(num_, sizeof num_ / sizeof *num_, 1 * need_sorting_flag);
+	std::fill_n(num_, sizeof num_ / sizeof * num_, 1 * need_sorting_flag);
 }
 
 void SpriteMapper::mapSprites() {
@@ -178,13 +189,21 @@ void SpriteMapper::mapSprites() {
 void SpriteMapper::sortLine(unsigned const ly) const {
 	num_[ly] &= ~(1u * need_sorting_flag);
 	insertionSort(spritemap_[ly], spritemap_[ly] + num_[ly],
-	              SpxLess(posbuf() + 1));
+		SpxLess(posbuf() + 1));
 }
 
 unsigned long SpriteMapper::doEvent(unsigned long const time) {
 	oamReader_.update(time);
 	mapSprites();
 	return oamReader_.changed()
-	     ? time + oamReader_.lineTime()
-	     : static_cast<unsigned long>(disabled_time);
+		? time + oamReader_.lineTime()
+		: static_cast<unsigned long>(disabled_time);
+}
+
+SYNCFUNC(SpriteMapper)
+{
+	NSS(spritemap_);
+	NSS(num_);
+
+	SSS(oamReader_);
 }

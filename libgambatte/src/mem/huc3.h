@@ -30,47 +30,47 @@ enum
 
 namespace gambatte {
 
-struct SaveState;
+	struct SaveState;
 
-class HuC3Chip {
-public:
-	HuC3Chip(Time &time);
+	class HuC3Chip {
+	public:
+		HuC3Chip(Time &time);
+		//void setStatePtrs(SaveState &);
+		void loadState(SaveState const& state);
+		void setRamflag(unsigned char ramflag) { ramflag_ = ramflag; irReceivingPulse_ = false; }
+		bool isHuC3() const { return enabled_; }
 
-	void saveState(SaveState &state) const;
-	void loadState(SaveState const &state);
-	void setRamflag(unsigned char ramflag) { ramflag_ = ramflag; irReceivingPulse_ = false;  }
-	bool isHuC3() const { return enabled_; }
+		void set(bool enabled) {
+			enabled_ = enabled;
+		}
 
-	void set(bool enabled) {
-		enabled_ = enabled;
-	}
-    
-	unsigned char read(unsigned p, unsigned long const cc);
-	void write(unsigned p, unsigned data, unsigned long cycleCounter);
+		unsigned char read(unsigned p, unsigned long const cc);
+		void write(unsigned p, unsigned data, unsigned long cycleCounter);
 
-private:
-	Time &time_;
-	std::time_t haltTime_;
-	unsigned dataTime_;
-	unsigned writingTime_;
-	unsigned char ramValue_;
-	unsigned char shift_;
-	unsigned char ramflag_;
-	unsigned char modeflag_;
-	unsigned long irBaseCycle_;
-	bool enabled_;
-	bool lastLatchData_;
-	bool halted_;
-	bool irReceivingPulse_;
+	private:
+		Time &time_;
+		std::uint32_t haltTime_;
+		unsigned dataTime_;
+		unsigned writingTime_;
+		unsigned char ramValue_;
+		unsigned char shift_;
+		unsigned char ramflag_;
+		unsigned char modeflag_;
+		unsigned long irBaseCycle_;
+		bool enabled_;
+		bool lastLatchData_;
+		bool halted_;
+		bool irReceivingPulse_;
 
-	void doLatch(unsigned long cycleCounter);
-	void updateTime(unsigned long cycleCounter);
+		void doLatch(unsigned long cycleCounter);
+		void updateTime(unsigned long cycleCounter);
 
-	std::time_t time(unsigned long const cc) {
-		return halted_ ? haltTime_ : time_.get(cc);
-	}
-};
-
+		std::uint32_t time(unsigned long const cc) {
+			return halted_ ? haltTime_ : time_.get(cc);
+		}
+	public:
+		template<bool isReader>void SyncState(NewState* ns);
+	};
 }
 
 #endif

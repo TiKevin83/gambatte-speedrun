@@ -19,6 +19,7 @@
 #ifndef LY_COUNTER_H
 #define LY_COUNTER_H
 
+#include "newstate.h"
 #include "lcddef.h"
 
 namespace gambatte {
@@ -52,6 +53,9 @@ private:
 	unsigned short lineTime_;
 	unsigned char ly_;
 	bool ds_;
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

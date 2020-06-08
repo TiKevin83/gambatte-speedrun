@@ -19,11 +19,11 @@
 #ifndef INITSTATE_H
 #define INITSTATE_H
 
+#include <cstdint>
+
 namespace gambatte {
 
-void setInitState(struct SaveState &state, bool cgb, bool sgb);
-void setInitStateCart(struct SaveState &state);
-
+void setInitState(struct SaveState &state, bool cgb);
 }
 
 #endif

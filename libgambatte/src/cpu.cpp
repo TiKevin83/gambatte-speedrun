@@ -23,15 +23,15 @@
 namespace gambatte {
 
 CPU::CPU()
-: mem_(Interrupter(sp, pc_, opcode_, prefetched_))
+: mem_(Interrupter(sp, pc, opcode_, prefetched_))
 , cycleCounter_(0)
-, pc_(0x100)
+, pc(0x100)
 , sp(0xFFFE)
 , hf1(0xF)
 , hf2(0xF)
 , zf(0)
 , cf(0x100)
-, a_(0x01)
+, a(0x01)
 , b(0x00)
 , c(0x13)
 , d(0x00)
@@ -40,11 +40,13 @@ CPU::CPU()
 , l(0x4D)
 , opcode_(0)
 , prefetched_(false)
-, numInterruptAddresses(0)
+, numInterruptAddresses()
+, tracecallback(0)
 {
 }
 
 long CPU::runFor(unsigned long const cycles) {
+	mem_.setBasetime(cycleCounter_);
 	process(cycles);
 
 	long const csb = mem_.cyclesSinceBlit(cycleCounter_);
@@ -86,33 +88,13 @@ void CPU::setStatePtrs(SaveState &state) {
 	mem_.setStatePtrs(state);
 }
 
-void CPU::saveState(SaveState &state) {
-	cycleCounter_ = mem_.saveState(state, cycleCounter_);
-	hf2 = updateHf2FromHf1(hf1, hf2);
-
-	state.cpu.cycleCounter = cycleCounter_;
-	state.cpu.pc = pc_;
-	state.cpu.sp = sp;
-	state.cpu.a = a_;
-	state.cpu.b = b;
-	state.cpu.c = c;
-	state.cpu.d = d;
-	state.cpu.e = e;
-	state.cpu.f = toF(hf2, cf, zf);
-	state.cpu.h = h;
-	state.cpu.l = l;
-	state.cpu.opcode = opcode_;
-	state.cpu.prefetched = prefetched_;
-	state.cpu.skip = false;
-}
-
 void CPU::loadState(SaveState const &state) {
 	mem_.loadState(state);
 
 	cycleCounter_ = state.cpu.cycleCounter;
-	pc_ = state.cpu.pc & 0xFFFF;
+	pc = state.cpu.pc & 0xFFFF;
 	sp = state.cpu.sp & 0xFFFF;
-	a_ = state.cpu.a & 0xFF;
+	a = state.cpu.a & 0xFF;
 	b = state.cpu.b & 0xFF;
 	c = state.cpu.c & 0xFF;
 	d = state.cpu.d & 0xFF;
@@ -125,9 +107,10 @@ void CPU::loadState(SaveState const &state) {
 	opcode_ = state.cpu.opcode;
 	prefetched_ = state.cpu.prefetched;
 	if (state.cpu.skip) {
-		opcode_ = mem_.read(pc_, cycleCounter_);
+		opcode_ = mem_.read(pc, cycleCounter_);
 		prefetched_ = true;
 	}
+
 }
 
 // The main reasons for the use of macros is to more conveniently be able to tweak
@@ -140,7 +123,8 @@ void CPU::loadState(SaveState const &state) {
 #define hl() ( h * 0x100u | l )
 
 #define READ(dest, addr) do { (dest) = mem_.read(addr, cycleCounter); cycleCounter += 4; } while (0)
-#define PC_READ(dest) do { (dest) = mem_.read(pc, cycleCounter); pc = (pc + 1) & 0xFFFF; cycleCounter += 4; } while (0)
+#define PC_READ(dest) do { (dest) = mem_.read_excb(pc, cycleCounter, false); pc = (pc + 1) & 0xFFFF; cycleCounter += 4; } while (0)
+#define PC_READ_FIRST(dest) do { (dest) = mem_.read_excb(pc, cycleCounter, true); pc = (pc + 1) & 0xFFFF; cycleCounter += 4; } while (0)
 #define FF_READ(dest, addr) do { (dest) = mem_.ff_read(addr, cycleCounter); cycleCounter += 4; } while (0)
 
 #define WRITE(addr, data) do { mem_.write(addr, data, cycleCounter); cycleCounter += 4; } while (0)
@@ -496,17 +480,14 @@ void CPU::loadState(SaveState const &state) {
 } while (0)
 
 namespace {
-
-unsigned long freeze(Memory &mem, unsigned long cc) {
-	mem.freeze(cc);
-	if (cc < mem.nextEventTime()) {
-		unsigned long cycles = mem.nextEventTime() - cc;
-		cc += cycles + (-cycles & 3);
+	unsigned long freeze(Memory & mem, unsigned long cc) {
+		mem.freeze(cc);
+		if (cc < mem.nextEventTime()) {
+			unsigned long cycles = mem.nextEventTime() - cc;
+			cc += cycles + (-cycles & 3);
+		}
+		return cc;
 	}
-
-	return cc;
-}
-
 }
 
 void CPU::process(unsigned long const cycles) {
@@ -515,11 +496,11 @@ void CPU::process(unsigned long const cycles) {
 
 	hitInterruptAddress = -1;
 
-	unsigned char a = a_;
+	//unsigned char a = a_;
 	unsigned long cycleCounter = cycleCounter_;
 
 	while (mem_.isActive()) {
-		unsigned short pc = pc_;
+		//unsigned short pc = pc_;
 
 		if (mem_.halted()) {
 			if (cycleCounter < mem_.nextEventTime()) {
@@ -529,6 +510,7 @@ void CPU::process(unsigned long const cycles) {
 		} else while (cycleCounter < mem_.nextEventTime()) {
 			unsigned char opcode;
 
+#ifdef DLLABLES
 			for (int i = 0; i < numInterruptAddresses; ++i) {
 				if (pc == (interruptAddresses[i] & 0xFFFF)) {
 					unsigned bank = interruptAddresses[i] >> 16;
@@ -543,10 +525,35 @@ void CPU::process(unsigned long const cycles) {
 
 			if (hitInterruptAddress != -1)
 				break;
+#endif
+
+			if (tracecallback) {
+				int result[14];
+				result[0] = cycleCounter;
+				result[1] = pc;
+				result[2] = sp;
+				result[3] = a;
+				result[4] = b;
+				result[5] = c;
+				result[6] = d;
+				result[7] = e;
+				result[8] = toF(hf2, cf, zf);
+				result[9] = h;
+				result[10] = l;
+				result[11] = prefetched_;
+				//PC_READ_FIRST(opcode);
+				result[12] = opcode;
+				result[13] = mem_.debugGetLY();
+				tracecallback((void *)result);
+			}
+			else {
+				//PC_READ_FIRST(opcode);
+			}
 
 			if (!prefetched_) {
 				PC_READ(opcode);
-			} else {
+			}
+			else {
 				opcode = opcode_;
 				cycleCounter += 4;
 				prefetched_ = false;
@@ -1033,7 +1040,7 @@ void CPU::process(unsigned long const cycles) {
 			case 0x74: WRITE(hl(), h); break;
 			case 0x75: WRITE(hl(), l); break;
 
-				// halt (4n cycles):
+				// halt (4 cycles):
 			case 0x76:
 				opcode_ = mem_.read(pc, cycleCounter);
 				if (mem_.pendingIrqs(cycleCounter)) {
@@ -1798,7 +1805,6 @@ void CPU::process(unsigned long const cycles) {
 				}
 
 				break;
-
 			case 0xDD: // not specified. should freeze.
 				cycleCounter = freeze(mem_, cycleCounter);
 				break;
@@ -1837,7 +1843,7 @@ void CPU::process(unsigned long const cycles) {
 				FF_WRITE(c, a);
 				break;
 
-			case 0xE3: // not specified. should freeze.
+			case 0xE3: 
 			case 0xE4: // not specified. should freeze.
 				cycleCounter = freeze(mem_, cycleCounter);
 				break;
@@ -2006,7 +2012,6 @@ void CPU::process(unsigned long const cycles) {
 			case 0xFD: // not specified. should freeze
 				cycleCounter = freeze(mem_, cycleCounter);
 				break;
-
 			case 0xFE:
 				{
 					unsigned data;
@@ -2023,20 +2028,20 @@ void CPU::process(unsigned long const cycles) {
 			}
 		}
 
-		pc_ = pc;
+		//pc_ = pc;
 		cycleCounter = mem_.event(cycleCounter);
 	}
 
-	a_ = a;
+	//a_ = a;
 	cycleCounter_ = cycleCounter;
 }
 
 void CPU::getRegs(int *dest) {
 	hf2 = updateHf2FromHf1(hf1, hf2);
 
-	dest[0] = pc_;
+	dest[0] = pc;
 	dest[1] = sp;
-	dest[2] = a_;
+	dest[2] = a;
 	dest[3] = b;
 	dest[4] = c;
 	dest[5] = d;
@@ -2046,21 +2051,6 @@ void CPU::getRegs(int *dest) {
 	dest[9] = l;
 }
 
-void CPU::setRegs(int *src) {
-	pc_ = src[0];
-	sp = src[1];
-	a_ = src[2];
-	b = src[3];
-	c = src[4];
-	d = src[5];
-	e = src[6];
-	zf  =  zfFromF(src[7]);
-	hf2 = hf2FromF(src[7]);
-	cf  =  cfFromF(src[7]);
-	h = src[8];
-	l = src[9];
-}
-
 void CPU::setInterruptAddresses(int *addrs, int numAddrs) {
 	interruptAddresses = addrs;
 	numInterruptAddresses = numAddrs;
@@ -2068,6 +2058,27 @@ void CPU::setInterruptAddresses(int *addrs, int numAddrs) {
 
 int CPU::getHitInterruptAddress() {
 	return hitInterruptAddress;
+}
+
+SYNCFUNC(CPU)
+{
+	SSS(mem_);
+	NSS(cycleCounter_);
+	NSS(pc);
+	NSS(sp);
+	NSS(hf1);
+	NSS(hf2);
+	NSS(zf);
+	NSS(cf);
+	NSS(a);
+	NSS(b);
+	NSS(c);
+	NSS(d);
+	NSS(e);
+	NSS(h);
+	NSS(l);
+	NSS(opcode_);
+	NSS(prefetched_);
 }
 
 }

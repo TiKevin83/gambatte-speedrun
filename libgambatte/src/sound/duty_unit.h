@@ -22,6 +22,7 @@
 #include "sound_unit.h"
 #include "master_disabler.h"
 #include "../savestate.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -36,7 +37,6 @@ public:
 	void nr4Change(unsigned newNr4, unsigned long cc, unsigned long ref, bool master);
 	void reset();
 	void resetCc(unsigned long cc, unsigned long newCc);
-	void saveState(SaveState::SPU::Duty &dstate, unsigned long cc);
 	void loadState(SaveState::SPU::Duty const &dstate, unsigned nr1, unsigned nr4, unsigned long cc);
 	void killCounter();
 	void reviveCounter(unsigned long cc);
@@ -57,6 +57,9 @@ private:
 	void setCounter();
 	void setDuty(unsigned nr1);
 	void updatePos(unsigned long cc);
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 class DutyMasterDisabler : public MasterDisabler {

@@ -19,18 +19,15 @@
 #include "channel3.h"
 #include "psgdef.h"
 #include "../savestate.h"
-
 #include <algorithm>
 #include <cstring>
 
 using namespace gambatte;
 
 namespace {
-
-unsigned toPeriod(unsigned nr3, unsigned nr4) {
-	return 0x800 - ((nr4 << 8 & 0x700) | nr3);
-}
-
+	unsigned toPeriod(unsigned nr3, unsigned nr4) {
+		return 0x800 - ((nr4 << 8 & 0x700) | nr3);
+	}
 }
 
 Channel3::Channel3()
@@ -103,18 +100,6 @@ void Channel3::setStatePtrs(SaveState &state) {
 	state.spu.ch3.waveRam.set(waveRam_, sizeof waveRam_);
 }
 
-void Channel3::saveState(SaveState &state) const {
-	lengthCounter_.saveState(state.spu.ch3.lcounter);
-
-	state.spu.ch3.waveCounter = waveCounter_;
-	state.spu.ch3.lastReadTime = lastReadTime_;
-	state.spu.ch3.nr3 = nr3_;
-	state.spu.ch3.nr4 = nr4_;
-	state.spu.ch3.wavePos = wavePos_;
-	state.spu.ch3.sampleBuf = sampleBuf_;
-	state.spu.ch3.master = master_;
-}
-
 void Channel3::loadState(SaveState const &state) {
 	lengthCounter_.loadState(state.spu.ch3.lcounter, state.spu.cycleCounter);
 
@@ -142,7 +127,7 @@ void Channel3::updateWaveCounter(unsigned long const cc) {
 	}
 }
 
-void Channel3::update(uint_least32_t *buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
+void Channel3::update(uint_least32_t* buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
 	unsigned long const outBase = nr0_ ? soBaseVol & soMask_ : 0;
 
 	if (outBase && rshift_ != 4) {
@@ -192,7 +177,8 @@ void Channel3::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 			prevOut_ = out;
 			cc = end;
 		}
-	} else {
+	}
+	else {
 		unsigned long const out = outBase * -15;
 		*buf += out - prevOut_;
 		prevOut_ = out;
@@ -211,4 +197,26 @@ void Channel3::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 		if (waveCounter_ != SoundUnit::counter_disabled)
 			waveCounter_ -= SoundUnit::counter_max;
 	}
+}
+
+SYNCFUNC(Channel3)
+{
+	NSS(waveRam_);
+
+	SSS(lengthCounter_);
+
+	NSS(soMask_);
+	NSS(prevOut_);
+	NSS(waveCounter_);
+	NSS(lastReadTime_);
+
+	NSS(nr0_);
+	NSS(nr3_);
+	NSS(nr4_);
+	NSS(wavePos_);
+	NSS(rshift_);
+	NSS(sampleBuf_);
+
+	NSS(master_);
+	NSS(cgb_);
 }

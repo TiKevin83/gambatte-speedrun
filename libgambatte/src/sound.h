@@ -23,6 +23,7 @@
 #include "sound/channel2.h"
 #include "sound/channel3.h"
 #include "sound/channel4.h"
+#include "newstate.h"
 
 namespace gambatte {
 
@@ -33,7 +34,6 @@ public:
 	void reset(bool ds);
 	void divReset(bool ds);
 	void setStatePtrs(SaveState &state);
-	void saveState(SaveState &state);
 	void loadState(SaveState const &state);
 
 	void generateSamples(unsigned long cycleCounter, bool doubleSpeed);
@@ -73,8 +73,6 @@ public:
 	void mapSo(unsigned nr51);
 	unsigned getStatus() const;
 
-	void setSpeedupFlags(unsigned flags) { speedupFlags_ = flags; }
-
 private:
 	Channel1 ch1_;
 	Channel2 ch2_;
@@ -88,9 +86,11 @@ private:
 	uint_least32_t rsum_;
 	bool enabled_;
 
-	unsigned speedupFlags_;
-
 	void accumulateChannels(unsigned long cycles);
+
+
+public:
+	template<bool isReader>void SyncState(NewState *ns);
 };
 
 }

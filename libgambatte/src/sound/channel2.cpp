@@ -19,7 +19,6 @@
 #include "channel2.h"
 #include "psgdef.h"
 #include "../savestate.h"
-
 #include <algorithm>
 
 using namespace gambatte;
@@ -89,15 +88,6 @@ void Channel2::reset() {
 	setEvent();
 }
 
-void Channel2::saveState(SaveState &state, unsigned long cc) {
-	dutyUnit_.saveState(state.spu.ch2.duty, cc);
-	envelopeUnit_.saveState(state.spu.ch2.env);
-	lengthCounter_.saveState(state.spu.ch2.lcounter);
-
-	state.spu.ch2.nr4 = nr4_;
-	state.spu.ch2.master = master_;
-}
-
 void Channel2::loadState(SaveState const &state) {
 	dutyUnit_.loadState(state.spu.ch2.duty, state.mem.ioamhram.get()[0x116],
 		state.spu.ch2.nr4, state.spu.cycleCounter);
@@ -109,7 +99,7 @@ void Channel2::loadState(SaveState const &state) {
 	master_ = state.spu.ch2.master;
 }
 
-void Channel2::update(uint_least32_t *buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
+void Channel2::update(uint_least32_t* buf, unsigned long const soBaseVol, unsigned long cc, unsigned long const end) {
 	unsigned long const outBase = envelopeUnit_.dacIsOn() ? soBaseVol & soMask_ : 0;
 	unsigned long const outLow = outBase * -15;
 
@@ -146,3 +136,23 @@ void Channel2::update(uint_least32_t *buf, unsigned long const soBaseVol, unsign
 		envelopeUnit_.resetCounters(cc);
 	}
 }
+
+SYNCFUNC(Channel2)
+{
+	SSS(lengthCounter_);
+	SSS(dutyUnit_);
+	SSS(envelopeUnit_);
+
+	EBS(nextEventUnit, 0);
+	EVS(nextEventUnit, &dutyUnit_, 1);
+	EVS(nextEventUnit, &envelopeUnit_, 2);
+	EVS(nextEventUnit, &lengthCounter_, 3);
+	EES(nextEventUnit, NULL);
+
+	NSS(soMask_);
+	NSS(prevOut_);
+
+	NSS(nr4_);
+	NSS(master_);
+}
+
