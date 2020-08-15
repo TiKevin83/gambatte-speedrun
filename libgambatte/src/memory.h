@@ -19,8 +19,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-static unsigned char const agbOverride[0xD] = { 0xFF, 0x00, 0xCD, 0x03, 0x35, 0xAA, 0x31, 0x90, 0x94, 0x00, 0x00, 0x00, 0x00 };
-
 #include "mem/cartridge.h"
 #include "interrupter.h"
 #include "sound.h"
@@ -83,9 +81,6 @@ public:
 	void ackIrq(unsigned bit, unsigned long cc);
 
 	unsigned readBios(unsigned p) {
-		if(isCgb() && agbMode_ && p >= 0xF3 && p < 0x100) {
-			return (agbOverride[p-0xF3] + bios_[p]) & 0xFF;
-		}
 		return bios_[p];
 	}
 
