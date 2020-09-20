@@ -311,16 +311,14 @@ public:
 			break;
 		case 1:
 			rombank_ = data;
+			if(!mbc30_)
+				rombank_ = rombank_ & 0x7F;
 			setRombank();
 			break;
 		case 2:
 			rambank_ = data;
-			if(!mbc30_ && !rtc_) {
-				rambank_ = rambank_ & 0x03;
-			}
-			if(mbc30_ && !rtc_) {
+			if(!rtc_)
 				rambank_ = rambank_ & 0x07;
-			}
 			if(rtc_) {
 				rambank_ = rambank_ & 0x0F;
 				mbcLockup_ = rambank_ > (rambanks(memptrs_) - 1) && rambank_ < 0x08 || rambank_ > 0x0C;
@@ -797,7 +795,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 	rtc_.set(false, 0);
 	huc3_.set(false);
 	
-	bool mbc30 = rambanks > 0x04;
+	bool mbc30 = rombanks > 0x80 || rambanks > 0x04;
 
 	std::memcpy(memptrs_.romdata(), romfiledata, (filesize / rombank_size() * rombank_size()));
 	std::memset(memptrs_.romdata() + filesize / rombank_size() * rombank_size(),
