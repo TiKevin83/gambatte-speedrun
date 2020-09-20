@@ -288,14 +288,13 @@ public:
 
 class Mbc3 : public DefaultMbc {
 public:
-	Mbc3(MemPtrs &memptrs, Rtc *const rtc, bool mbc30)
+	Mbc3(MemPtrs &memptrs, Rtc *const rtc)
 	: memptrs_(memptrs)
 	, rtc_(rtc)
 	, rombank_(1)
 	, rambank_(0)
 	, enableRam_(false)
 	, mbcLockup_(false)
-	, mbc30_(mbc30)
 	{
 	}
 
@@ -315,12 +314,8 @@ public:
 			break;
 		case 2:
 			rambank_ = data;
-			if(!mbc30_ && !rtc_) {
-				rambank_ = rambank_ & 0x03;
-			}
-			if(mbc30_ && !rtc_) {
+			if(!rtc_)
 				rambank_ = rambank_ & 0x07;
-			}
 			if(rtc_) {
 				rambank_ = rambank_ & 0x0F;
 				mbcLockup_ = rambank_ > (rambanks(memptrs_) - 1) && rambank_ < 0x08 || rambank_ > 0x0C;
@@ -350,7 +345,6 @@ private:
 	unsigned char rombank_;
 	unsigned char rambank_;
 	bool enableRam_;
-	bool mbc30_;
 	bool mbcLockup_;
 
 	void setRambank() const {
@@ -796,8 +790,6 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 	memptrs_.reset(rombanks, rambanks, cgb ? 8 : 2);
 	rtc_.set(false, 0);
 	huc3_.set(false);
-	
-	bool mbc30 = rambanks > 0x04;
 
 	std::memcpy(memptrs_.romdata(), romfiledata, (filesize / rombank_size() * rombank_size()));
 	std::memset(memptrs_.romdata() + filesize / rombank_size() * rombank_size(),
@@ -816,7 +808,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 		break;
 	case type_mbc2: mbc_.reset(new Mbc2(memptrs_)); break;
 	case type_mbc3:
-		mbc_.reset(new Mbc3(memptrs_, hasRtc(memptrs_.romdata()[0x147]) ? &rtc_ : 0, mbc30));
+		mbc_.reset(new Mbc3(memptrs_, hasRtc(memptrs_.romdata()[0x147]) ? &rtc_ : 0));
 		break;
 	case type_mbc5: mbc_.reset(new Mbc5(memptrs_)); break;
 	case type_huc1: mbc_.reset(new HuC1(memptrs_)); break;
