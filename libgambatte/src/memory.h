@@ -158,6 +158,10 @@ public:
 			if(map.type != eCDLog_AddrType_None)
 				cdCallback_(map.addr, map.type, eCDLog_Flags_Data);
 		}
+		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
+			p = p & 0xA1FF;
+			return (cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc)) | 0xF0;
+		}
 		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
 	}
 
@@ -191,6 +195,10 @@ public:
 	}
 
 	void write(unsigned p, unsigned data, unsigned long cc) {
+		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
+			p = p & 0xA1FF;
+			data = data | 0xF0;
+		}
 		if (cart_.wmem(p >> 12)) {
 			cart_.wmem(p >> 12)[p] = data;
 		} else

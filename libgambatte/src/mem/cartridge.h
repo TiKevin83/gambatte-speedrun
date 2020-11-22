@@ -83,11 +83,14 @@ public:
 	bool getMemoryArea(int which, unsigned char **data, int *length) const;
 	LoadRes loadROM(char const *romfiledata, unsigned romfilelength, bool forceDmg, bool multicartCompat);
 	char const * romTitle() const { return reinterpret_cast<char const *>(memptrs_.romdata() + 0x134); }
+	bool isMbc2() const { return mbc2_; }
 	bool isHuC3() const { return huc3_.isHuC3(); }
 	unsigned char HuC3Read(unsigned p, unsigned long const cc) { return huc3_.read(p, cc); }
 	void HuC3Write(unsigned p, unsigned data, unsigned long const cc) { huc3_.write(p, data, cc); }
 
 private:
+	bool mbc2_ = false;
+
 	MemPtrs memptrs_;
 	Time time_;
 	Rtc rtc_;
