@@ -23,7 +23,7 @@
 
 namespace gambatte {
 
-void setInitState(struct SaveState &state, bool cgb);
+void setInitState(struct SaveState &state, bool cgb, bool agb);
 }
 
 #endif

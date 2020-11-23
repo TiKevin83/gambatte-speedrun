@@ -88,7 +88,7 @@ void GB::reset() {
 
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
-		setInitState(state, !(p_->loadflags & FORCE_DMG));
+		setInitState(state, !(p_->loadflags & FORCE_DMG), p_->loadflags & GBA_CGB);
 		p_->cpu.loadState(state);
 		if (length > 0)
 		{
@@ -145,7 +145,7 @@ LoadRes GB::load(char const *romfiledata, unsigned romfilelength, unsigned const
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
 		p_->loadflags = flags;
-		setInitState(state, !(flags & FORCE_DMG));
+		setInitState(state, !(flags & FORCE_DMG), flags & GBA_CGB);
 		p_->cpu.loadState(state);
 	}
 
