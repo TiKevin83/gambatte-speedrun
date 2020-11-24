@@ -103,7 +103,7 @@ void Memory::loadState(SaveState const &state) {
 			ioamhram_[0x102] & (isCgb() & !isCgbDmg()) * 2)
 		: 8;
 
-	cart_.setVrambank(ioamhram_[0x14F] & (isCgb() & !isCgbDmg()));;
+	cart_.setVrambank(ioamhram_[0x14F] & (isCgb() & !isCgbDmg()));
 	cart_.setOamDmaSrc(oam_dma_src_off);
 	cart_.setWrambank((isCgb() && !isCgbDmg()) && (ioamhram_[0x170] & 0x07) ? ioamhram_[0x170] & 0x07 : 1);
 
