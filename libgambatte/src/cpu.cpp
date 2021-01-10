@@ -551,7 +551,7 @@ void CPU::process(unsigned long const cycles) {
 			}
 
 			if (!prefetched_) {
-				PC_READ(opcode);
+				PC_READ_FIRST(opcode);
 			}
 			else {
 				opcode = opcode_;
