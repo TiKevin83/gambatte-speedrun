@@ -240,6 +240,52 @@ public:
 	}
 };
 
+class MbcWisdomTree : public Mbc {
+public:
+	explicit MbcWisdomTree(MemPtrs& memptrs)
+		: memptrs_(memptrs)
+		, rombank_(0)
+	{
+	}
+
+	virtual unsigned char curRomBank() const {
+		return rombank_;
+	}
+
+	virtual void romWrite(unsigned const p, unsigned const data, unsigned long const /*cc*/) {
+		rombank_ = ((p & 0xFF) << 1) & (rombanks(memptrs_) - 1);
+		setRombank();
+	}
+
+	virtual void saveState(SaveState::Mem& ss) const {
+		ss.rombank = rombank_;
+	}
+
+	virtual void loadState(SaveState::Mem const& ss) {
+		rombank_ = ss.rombank;
+		setRombank();
+	}
+
+	virtual bool isAddressWithinAreaRombankCanBeMappedTo(unsigned addr, unsigned bank) const {
+		return (addr < 0x4000);
+	}
+
+private:
+	MemPtrs& memptrs_;
+	unsigned char rombank_;
+
+	void setRombank() const {
+		memptrs_.setRombank0(rombank_);
+		memptrs_.setRombank(rombank_ + 1);
+	}
+
+public:
+	virtual void SyncState(NewState* ns, bool isReader)
+	{
+		NSS(rombank_);
+	}
+};
+
 class Mbc2 : public DefaultMbc {
 public:
 	explicit Mbc2(MemPtrs &memptrs)
@@ -718,13 +764,16 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 	                     type_mbc3,
 	                     type_mbc5,
 	                     type_huc1,
-						 type_huc3 };
+						 type_huc3,
+						 type_mbcwisdomtree };
 	Cartridgetype type = type_plain;
 	unsigned rambanks = 1;
 	unsigned rombanks = 2;
 	bool cgb = false;
 
 	{
+		static const char strWisdomTree1[12] = "WISDOM TREE";
+		static const char strWisdomTree2[12] = "WISDOM\0TREE";
 		unsigned char header[0x150];
 		if (romfilelength >= sizeof header)
 			std::memcpy(header, romfiledata, sizeof header);
@@ -732,7 +781,15 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 			return LOADRES_IO_ERROR;
 
 		switch (header[0x0147]) {
-		case 0x00: type = type_plain; break;
+		case 0x00:
+			// Wisdom Tree
+			if (std::search(romfiledata, romfiledata + romfilelength, strWisdomTree1, strWisdomTree1 + 11) != (romfiledata + romfilelength) ||
+				std::search(romfiledata, romfiledata + romfilelength, strWisdomTree2, strWisdomTree2 + 11) != (romfiledata + romfilelength)) {
+				type = type_mbcwisdomtree;
+			} else {
+				type = type_plain;
+			}
+			break;
 		case 0x01:
 		case 0x02:
 		case 0x03: type = type_mbc1; break;
@@ -820,6 +877,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 		huc3_.set(true);
 		mbc_.reset(new HuC3(memptrs_, &huc3_));
 		break;
+	case type_mbcwisdomtree: mbc_.reset(new MbcWisdomTree(memptrs_)); break;
 	}
 
 	return LOADRES_OK;
