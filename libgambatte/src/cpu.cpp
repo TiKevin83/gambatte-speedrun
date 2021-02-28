@@ -88,6 +88,10 @@ void CPU::setStatePtrs(SaveState &state) {
 	mem_.setStatePtrs(state);
 }
 
+void CPU::saveRtcState(SaveState& state) {
+	mem_.saveRtcState(state, cycleCounter_);
+}
+
 void CPU::loadState(SaveState const &state) {
 	mem_.loadState(state);
 
@@ -2061,7 +2065,7 @@ int CPU::getHitInterruptAddress() {
 }
 
 SYNCFUNC(CPU)
-{
+{	
 	SSS(mem_);
 	NSS(cycleCounter_);
 	NSS(pc);

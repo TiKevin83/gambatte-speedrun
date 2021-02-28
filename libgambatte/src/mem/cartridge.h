@@ -52,6 +52,7 @@ class Cartridge {
 public:
 	Cartridge();
 	void setStatePtrs(SaveState &);
+	void saveRtcState(SaveState&, unsigned long cycleCounter);
 	void loadState(SaveState const &);
 	bool loaded() const { return mbc_.get(); }
 	unsigned char const * rmem(unsigned area) const { return memptrs_.rmem(area); }

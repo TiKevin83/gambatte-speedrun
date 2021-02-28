@@ -23,8 +23,6 @@
 #include <cstring>
 #include <fstream>
 
-#define fallthrough __attribute__((fallthrough))
-
 using namespace gambatte;
 
 namespace {
@@ -744,6 +742,10 @@ void Cartridge::setStatePtrs(SaveState &state) {
 	state.mem.wram.set(memptrs_.wramdata(0), memptrs_.wramdataend() - memptrs_.wramdata(0));
 }
 
+void Cartridge::saveRtcState(SaveState& state, unsigned long const cc) {
+	time_.saveRtcState(state, cc);
+}
+
 void Cartridge::loadState(SaveState const &state) {
 	huc3_.loadState(state);
 	rtc_.loadState(state);
@@ -807,7 +809,6 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 		case 0x1B:
 			if (header[0x014A] == 0xE1)
 				return LOADRES_UNSUPPORTED_MBC_EMS_MULTICART;
-		fallthrough;
 		case 0x19:
 		case 0x1A:
 		case 0x1C:
@@ -825,7 +826,6 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 				type = type_mbcwisdomtree;
 				break;
 			}
-		fallthrough;
 		default:   return LOADRES_BAD_FILE_OR_UNKNOWN_MBC;
 		}
 
@@ -852,7 +852,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 	rombanks = std::max(pow2ceil(filesize / rombank_size()), 2u);
 
 	if (multicartCompat && type == type_plain && rombanks > 2)
-		type = type_mbcwisdomtree
+		type = type_mbcwisdomtree;
 
 	mbc_.reset();
 	memptrs_.reset(rombanks, rambanks, cgb ? 8 : 2);

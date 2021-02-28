@@ -41,6 +41,7 @@ public:
 	char const * romTitle() const { return cart_.romTitle(); }
 	int debugGetLY() const { return lcd_.debugGetLY(); }
 	void setStatePtrs(SaveState &state);
+	void saveRtcState(SaveState& state, unsigned long cc);
 	void loadState(SaveState const &state);
 	void loadSavedata(char const *data, unsigned long const cc) { cart_.loadSavedata(data, cc); }
 	int saveSavedataLength() {return cart_.saveSavedataLength(); }

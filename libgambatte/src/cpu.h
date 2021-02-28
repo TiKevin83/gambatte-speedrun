@@ -29,6 +29,7 @@ public:
 	CPU();
 	long runFor(unsigned long cycles);
 	void setStatePtrs(SaveState &state);
+	void saveRtcState(SaveState& state);
 	void loadState(SaveState const &state);
 	void setLayers(unsigned mask) { mem_.setLayers(mask); }
 	void loadSavedata(char const *data) { mem_.loadSavedata(data, cycleCounter_); }

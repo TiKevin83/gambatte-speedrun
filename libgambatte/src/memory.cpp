@@ -79,6 +79,11 @@ void Memory::setStatePtrs(SaveState &state) {
 	psg_.setStatePtrs(state);
 }
 
+void Memory::saveRtcState(SaveState& state, unsigned long cc) {
+	cc = resetCounters(cc);
+	cart_.saveRtcState(state, cc);
+}
+
 void Memory::loadState(SaveState const &state) {
 	biosMode_ = state.mem.biosMode;
 	stopped_ = state.mem.stopped;

@@ -77,24 +77,11 @@ void GB::blitTo(gambatte::uint_least32_t *videoBuf, std::ptrdiff_t pitch) {
 
 void GB::reset() {
 	if (p_->cpu.loaded()) {
-
-		int length = p_->cpu.saveSavedataLength();
-		char *s;
-		if (length > 0)
-		{
-			s = (char *) std::malloc(length);
-			p_->cpu.saveSavedata(s);
-		}
-
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
+		p_->cpu.saveRtcState(state);
 		setInitState(state, !(p_->loadflags & FORCE_DMG), p_->loadflags & GBA_CGB);
 		p_->cpu.loadState(state);
-		if (length > 0)
-		{
-			p_->cpu.loadSavedata(s);
-			std::free(s);
-		}
 	}
 }
 
@@ -146,6 +133,7 @@ LoadRes GB::load(char const *romfiledata, unsigned romfilelength, unsigned const
 		p_->cpu.setStatePtrs(state);
 		p_->loadflags = flags;
 		setInitState(state, !(flags & FORCE_DMG), flags & GBA_CGB);
+		setInitStateCart(state);
 		p_->cpu.loadState(state);
 	}
 

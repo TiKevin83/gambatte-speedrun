@@ -46,6 +46,7 @@ public:
 	}
 
 	Time();
+	void saveRtcState(SaveState& state, unsigned long cycleCounter);
 	void loadState(SaveState const &state);
 
 	std::uint32_t get(unsigned long cycleCounter);

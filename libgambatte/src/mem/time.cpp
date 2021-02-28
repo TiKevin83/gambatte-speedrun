@@ -38,6 +38,18 @@ Time::Time()
 {
 }
 
+void Time::saveRtcState(SaveState& state, unsigned long const cc) {
+	if (useCycles_)
+		timeFromCycles(cc);
+	else
+		cyclesFromTime(cc);
+
+	state.time.seconds = seconds_;
+	state.time.lastTimeSec = lastTime_.tv_sec;
+	state.time.lastTimeUsec = lastTime_.tv_usec;
+	state.time.lastCycles = lastCycles_;
+}
+
 void Time::loadState(SaveState const &state) {
 	seconds_ = state.time.seconds;
 	lastTime_.tv_sec = state.time.lastTimeSec;
