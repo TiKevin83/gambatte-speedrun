@@ -80,7 +80,7 @@ void GB::reset() {
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
 		p_->cpu.saveRtcState(state);
-		setInitState(state, !(p_->loadflags & FORCE_DMG), p_->loadflags & GBA_CGB);
+		setInitState(state, p_->loadflags & CGB_MODE, p_->loadflags & GBA_FLAG);
 		p_->cpu.loadState(state);
 	}
 }
@@ -132,7 +132,7 @@ LoadRes GB::load(char const *romfiledata, unsigned romfilelength, unsigned const
 		SaveState state;
 		p_->cpu.setStatePtrs(state);
 		p_->loadflags = flags;
-		setInitState(state, !(flags & FORCE_DMG), flags & GBA_CGB);
+		setInitState(state, flags & CGB_MODE, flags & GBA_FLAG);
 		setInitStateCart(state);
 		p_->cpu.loadState(state);
 	}

@@ -1255,16 +1255,16 @@ void Memory::nontrivial_write(unsigned const p, unsigned const data, unsigned lo
 }
 
 LoadRes Memory::loadROM(char const *romfiledata, unsigned romfilelength, unsigned const flags) {
-	bool const forceDmg = flags & GB::LoadFlag::FORCE_DMG;
+	bool const cgbMode = flags & GB::LoadFlag::CGB_MODE;
 	bool const multicartCompat = flags & GB::LoadFlag::MULTICART_COMPAT;
 
-	if (LoadRes const fail = cart_.loadROM(romfiledata, romfilelength, forceDmg, multicartCompat))
+	if (LoadRes const fail = cart_.loadROM(romfiledata, romfilelength, cgbMode, multicartCompat))
 		return fail;
 
 	psg_.init(cart_.isCgb());
 	lcd_.reset(ioamhram_, cart_.vramdata(), cart_.isCgb());
 
-	agbMode_ = flags & GB::LoadFlag::GBA_CGB;
+	agbMode_ = flags & GB::LoadFlag::GBA_FLAG;
 
 	return LOADRES_OK;
 }

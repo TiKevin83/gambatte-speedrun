@@ -49,7 +49,7 @@ namespace gambatte {
 
 	private:
 		Time &time_;
-		std::uint32_t haltTime_;
+		std::time_t haltTime_;
 		unsigned dataTime_;
 		unsigned writingTime_;
 		unsigned char ramValue_;
@@ -65,7 +65,7 @@ namespace gambatte {
 		void doLatch(unsigned long cycleCounter);
 		void updateTime(unsigned long cycleCounter);
 
-		std::uint32_t time(unsigned long const cc) {
+		std::time_t time(unsigned long const cc) {
 			return halted_ ? haltTime_ : time_.get(cc);
 		}
 	public:

@@ -768,7 +768,7 @@ static unsigned numRambanksFromH14x(unsigned char h147, unsigned char h149) {
 	return 4;
 }
 
-LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool const forceDmg, bool const multicartCompat) {
+LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool const cgbMode, bool const multicartCompat) {
 	enum Cartridgetype { type_plain,
 	                     type_mbc1,
 	                     type_mbc2,
@@ -846,7 +846,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 		}*/
 
 		rambanks = numRambanksFromH14x(header[0x147], header[0x149]);
-		cgb = !forceDmg;
+		cgb = cgbMode;
 	}
 	std::size_t const filesize = romfilelength;
 	rombanks = std::max(pow2ceil(filesize / rombank_size()), 2u);

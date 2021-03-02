@@ -40,7 +40,7 @@ HuC3Chip::HuC3Chip(Time &time)
 }
 
 void HuC3Chip::doLatch(unsigned long const cc) {
-	std::uint32_t tmp = time(cc);
+	std::time_t tmp = time(cc);
     
 	unsigned minute = (tmp / 60) % 1440;
 	unsigned day = (tmp / 86400) & 0xFFF;
@@ -180,7 +180,7 @@ void HuC3Chip::write(unsigned /*p*/, unsigned data, unsigned long const cc) {
 void HuC3Chip::updateTime(unsigned long const cc) {
 	unsigned minute = (writingTime_ & 0xFFF) % 1440;
 	unsigned day = (writingTime_ & 0xFFF000) >> 12;
-	std::uint32_t seconds = minute*60 + day*86400;
+	std::time_t seconds = minute*60 + day*86400;
 	time_.reset(seconds, cc);
 	haltTime_ = seconds;
     
