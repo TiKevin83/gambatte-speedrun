@@ -907,14 +907,14 @@ void Cartridge::loadSavedata(char const *data, unsigned long const cc) {
 
 	if (hasRtc(memptrs_.romdata()[0x147])) {
 		timeval basetime;
-		basetime.tv_sec = (*data++);
-		basetime.tv_sec = basetime.tv_sec << 8 | (*data++);
-		basetime.tv_sec = basetime.tv_sec << 8 | (*data++);
-		basetime.tv_sec = basetime.tv_sec << 8 | (*data++);
-		basetime.tv_usec = (*data++);
-		basetime.tv_usec = basetime.tv_usec << 8 | (*data++);
-		basetime.tv_usec = basetime.tv_usec << 8 | (*data++);
-		basetime.tv_usec = basetime.tv_usec << 8 | (*data++);
+		basetime.tv_sec = (*data++ & 0xFF);
+		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
+		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
+		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
+		basetime.tv_usec = (*data++ & 0xFF);
+		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
+		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
+		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
 
 		time_.setBaseTime(basetime, cc);
 	}
