@@ -38,6 +38,18 @@ Time::Time()
 {
 }
 
+void Time::saveRtcState(SaveState& state, unsigned long const cc) {
+	if (useCycles_)
+		timeFromCycles(cc);
+	else
+		cyclesFromTime(cc);
+
+	state.time.seconds = seconds_;
+	state.time.lastTimeSec = lastTime_.tv_sec;
+	state.time.lastTimeUsec = lastTime_.tv_usec;
+	state.time.lastCycles = lastCycles_;
+}
+
 void Time::loadState(SaveState const &state) {
 	seconds_ = state.time.seconds;
 	lastTime_.tv_sec = state.time.lastTimeSec;
@@ -46,17 +58,17 @@ void Time::loadState(SaveState const &state) {
 	ds_ = (!state.ppu.notCgbDmg) & state.mem.ioamhram.get()[0x14D] >> 7;
 }
 
-std::uint32_t Time::get(unsigned long const cc) {
+std::time_t Time::get(unsigned long const cc) {
 	update(cc);
 	return seconds_;
 }
 
-void Time::set(std::uint32_t seconds, unsigned long const cc) {
+void Time::set(std::time_t seconds, unsigned long const cc) {
 	update(cc);
 	seconds_ = seconds;
 }
 
-void Time::reset(std::uint32_t seconds, unsigned long const cc) {
+void Time::reset(std::time_t seconds, unsigned long const cc) {
 	set(seconds, cc);
 	lastTime_ = now();
 	lastCycles_ = cc;
@@ -109,11 +121,11 @@ void Time::setTimeMode(bool useCycles, unsigned long const cc) {
 
 void Time::update(unsigned long const cc) {
 	if (useCycles_) {
-		std::uint32_t diff = (cc - lastCycles_) / (rtcDivisor_ << ds_);
+		std::time_t diff = (cc - lastCycles_) / (rtcDivisor_ << ds_);
 		seconds_ += diff;
 		lastCycles_ += diff * (rtcDivisor_ << ds_);
 	} else {
-		std::uint32_t diff = (now() - lastTime_).tv_sec;
+		std::time_t diff = (now() - lastTime_).tv_sec;
 		seconds_ += diff;
 		lastTime_.tv_sec += diff;
 	}

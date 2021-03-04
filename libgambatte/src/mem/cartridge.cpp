@@ -742,6 +742,10 @@ void Cartridge::setStatePtrs(SaveState &state) {
 	state.mem.wram.set(memptrs_.wramdata(0), memptrs_.wramdataend() - memptrs_.wramdata(0));
 }
 
+void Cartridge::saveRtcState(SaveState& state, unsigned long const cc) {
+	time_.saveRtcState(state, cc);
+}
+
 void Cartridge::loadState(SaveState const &state) {
 	huc3_.loadState(state);
 	rtc_.loadState(state);
@@ -764,7 +768,7 @@ static unsigned numRambanksFromH14x(unsigned char h147, unsigned char h149) {
 	return 4;
 }
 
-LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool const forceDmg, bool const multicartCompat) {
+LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool const cgbMode, bool const multicartCompat) {
 	enum Cartridgetype { type_plain,
 	                     type_mbc1,
 	                     type_mbc2,
@@ -842,7 +846,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 		}*/
 
 		rambanks = numRambanksFromH14x(header[0x147], header[0x149]);
-		cgb = !forceDmg;
+		cgb = cgbMode;
 	}
 	std::size_t const filesize = romfilelength;
 	rombanks = std::max(pow2ceil(filesize / rombank_size()), 2u);
@@ -903,14 +907,14 @@ void Cartridge::loadSavedata(char const *data, unsigned long const cc) {
 
 	if (hasRtc(memptrs_.romdata()[0x147])) {
 		timeval basetime;
-		basetime.tv_sec = (*data++);
-		basetime.tv_sec = basetime.tv_sec << 8 | (*data++);
-		basetime.tv_sec = basetime.tv_sec << 8 | (*data++);
-		basetime.tv_sec = basetime.tv_sec << 8 | (*data++);
-		basetime.tv_usec = (*data++);
-		basetime.tv_usec = basetime.tv_usec << 8 | (*data++);
-		basetime.tv_usec = basetime.tv_usec << 8 | (*data++);
-		basetime.tv_usec = basetime.tv_usec << 8 | (*data++);
+		basetime.tv_sec = (*data++ & 0xFF);
+		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
+		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
+		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
+		basetime.tv_usec = (*data++ & 0xFF);
+		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
+		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
+		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
 
 		time_.setBaseTime(basetime, cc);
 	}

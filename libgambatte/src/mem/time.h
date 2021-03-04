@@ -29,15 +29,15 @@ namespace gambatte {
 struct SaveState;
 
 struct timeval {
-	std::uint32_t tv_sec;
-	std::uint32_t tv_usec;
+	std::time_t tv_sec;
+	std::time_t tv_usec;
 };
 
 class Time {
 public:
 	static timeval now() {
 		long long micros = std::chrono::duration_cast<std::chrono::microseconds>(
-				std::chrono::high_resolution_clock::now().time_since_epoch())
+				std::chrono::system_clock::now().time_since_epoch())
 			.count();
 		timeval t;
 		t.tv_usec = micros % 1000000;
@@ -46,11 +46,12 @@ public:
 	}
 
 	Time();
+	void saveRtcState(SaveState& state, unsigned long cycleCounter);
 	void loadState(SaveState const &state);
 
-	std::uint32_t get(unsigned long cycleCounter);
-	void set(std::uint32_t seconds, unsigned long cycleCounter);
-	void reset(std::uint32_t seconds, unsigned long cycleCounter);
+	std::time_t get(unsigned long cycleCounter);
+	void set(std::time_t seconds, unsigned long cycleCounter);
+	void reset(std::time_t seconds, unsigned long cycleCounter);
 	void resetCc(unsigned long oldCc, unsigned long newCc);
 	void speedChange(unsigned long cycleCounter);
 
@@ -60,7 +61,7 @@ public:
 	void setRtcDivisorOffset(long const rtcDivisorOffset) { rtcDivisor_ = 0x400000L + rtcDivisorOffset; }
 
 private:
-	std::uint32_t seconds_;
+	std::time_t seconds_;
 	timeval lastTime_;
 	unsigned long lastCycles_;
 	bool useCycles_;

@@ -39,7 +39,7 @@ Rtc::Rtc(Time &time)
 }
 
 void Rtc::doLatch(unsigned long const cc) {
-	std::uint32_t tmp = time(cc);
+	std::time_t tmp = time(cc);
 
 	if (tmp >= 0x200 * 86400) {
 		tmp %= 0x200 * 86400;
@@ -101,8 +101,8 @@ void Rtc::loadState(SaveState const &state) {
 }
 
 void Rtc::setDh(unsigned const newDh, unsigned const long cc) {
-	std::uint32_t seconds = time(cc);
-	std::uint32_t const oldHighdays = (seconds / 86400) & 0x100;
+	std::time_t seconds = time(cc);
+	std::time_t const oldHighdays = (seconds / 86400) & 0x100;
 	seconds -= oldHighdays * 86400;
 	seconds += ((newDh & 0x1) << 8) * 86400;
 	time_.set(seconds, cc);
@@ -112,8 +112,8 @@ void Rtc::setDh(unsigned const newDh, unsigned const long cc) {
 }
 
 void Rtc::setDl(unsigned const newLowdays, unsigned const long cc) {
-	std::uint32_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
-	std::uint32_t const oldLowdays = (seconds / 86400) & 0xFF;
+	std::time_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
+	std::time_t const oldLowdays = (seconds / 86400) & 0xFF;
 	seconds -= oldLowdays * 86400;
 	seconds += newLowdays * 86400;
 	if (dataDh_ & 0x40)
@@ -123,8 +123,8 @@ void Rtc::setDl(unsigned const newLowdays, unsigned const long cc) {
 }
 
 void Rtc::setH(unsigned const newHours, unsigned const long cc) {
-	std::uint32_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
-	std::uint32_t const oldHours = (seconds / 3600) % 24;
+	std::time_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
+	std::time_t const oldHours = (seconds / 3600) % 24;
 	seconds -= oldHours * 3600;
 	seconds += newHours * 3600;
 	if (dataDh_ & 0x40)
@@ -134,8 +134,8 @@ void Rtc::setH(unsigned const newHours, unsigned const long cc) {
 }
 
 void Rtc::setM(unsigned const newMinutes, unsigned const long cc) {
-	std::uint32_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
-	std::uint32_t const oldMinutes = (seconds / 60) % 60;
+	std::time_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
+	std::time_t const oldMinutes = (seconds / 60) % 60;
 	seconds -= oldMinutes * 60;
 	seconds += newMinutes * 60;
 	if (dataDh_ & 0x40)
@@ -145,7 +145,7 @@ void Rtc::setM(unsigned const newMinutes, unsigned const long cc) {
 }
 
 void Rtc::setS(unsigned const newSeconds, unsigned const long cc) {
-	std::uint32_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
+	std::time_t seconds = (dataDh_ & 0x40) ? haltTime_ : time(cc);
 	seconds -= seconds % 60;
 	seconds += newSeconds;
 	if (dataDh_ & 0x40)

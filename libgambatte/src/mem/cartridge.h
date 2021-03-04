@@ -52,6 +52,7 @@ class Cartridge {
 public:
 	Cartridge();
 	void setStatePtrs(SaveState &);
+	void saveRtcState(SaveState&, unsigned long cycleCounter);
 	void loadState(SaveState const &);
 	bool loaded() const { return mbc_.get(); }
 	unsigned char const * rmem(unsigned area) const { return memptrs_.rmem(area); }
@@ -81,7 +82,7 @@ public:
 	int saveSavedataLength();
 	void saveSavedata(char *dest, unsigned long cycleCounter);
 	bool getMemoryArea(int which, unsigned char **data, int *length) const;
-	LoadRes loadROM(char const *romfiledata, unsigned romfilelength, bool forceDmg, bool multicartCompat);
+	LoadRes loadROM(char const *romfiledata, unsigned romfilelength, bool cgbMode, bool multicartCompat);
 	char const * romTitle() const { return reinterpret_cast<char const *>(memptrs_.romdata() + 0x134); }
 	bool isMbc2() const { return mbc2_; }
 	bool isHuC3() const { return huc3_.isHuC3(); }
