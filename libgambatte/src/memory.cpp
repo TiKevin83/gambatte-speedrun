@@ -454,6 +454,11 @@ unsigned long Memory::stop(unsigned long cc, bool &skip) {
 	return cc;
 }
 
+void Memory::stall(unsigned long cc, unsigned long cycles) {
+	intreq_.halt();
+	intreq_.setEventTime<intevent_unhalt>(cc + cycles);
+}
+
 void Memory::decEventCycles(IntEventId eventId, unsigned long dec) {
 	if (intreq_.eventTime(eventId) != disabled_time)
 		intreq_.setEventTime(eventId, intreq_.eventTime(eventId) - dec);

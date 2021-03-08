@@ -82,6 +82,9 @@ void GB::reset() {
 		p_->cpu.saveRtcState(state);
 		setInitState(state, p_->loadflags & CGB_MODE, p_->loadflags & GBA_FLAG);
 		p_->cpu.loadState(state);
+		
+		if (p_->loadflags & GBA_FLAG)
+			p_->cpu.stall(971616); // GBA takes 971616 cycles to switch to CGB mode; CGB CPU is inactive during this time.
 	}
 }
 
@@ -135,6 +138,9 @@ LoadRes GB::load(char const *romfiledata, unsigned romfilelength, unsigned const
 		setInitState(state, flags & CGB_MODE, flags & GBA_FLAG);
 		setInitStateCart(state);
 		p_->cpu.loadState(state);
+
+		if (flags & GBA_FLAG)
+			p_->cpu.stall(971616); // GBA takes 971616 cycles to switch to CGB mode; CGB CPU is inactive during this time.
 	}
 
 	return loadres;

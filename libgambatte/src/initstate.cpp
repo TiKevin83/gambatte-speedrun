@@ -1224,7 +1224,7 @@ void gambatte::setInitState(SaveState &state, const bool cgb, const bool agb) {
 		0x83, 0x40, 0x0B, 0x77
 	};
 
-	state.cpu.cycleCounter = 8;
+	state.cpu.cycleCounter = 8 + (agb * 11424); // FIXME: This is a hack to re-align the cycle counter
 	state.cpu.pc = 0;
 	state.cpu.sp = 0;
 	state.cpu.a = 0;
