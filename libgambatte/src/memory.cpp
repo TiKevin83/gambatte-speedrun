@@ -271,6 +271,10 @@ unsigned long Memory::event(unsigned long cc) {
 			intreq_.unhalt();
 			intreq_.setEventTime<intevent_unhalt>(disabled_time);
 		}
+		if (cc >= intreq_.eventTime(intevent_video))
+			lcd_.update(cc);
+		if (cc >= intreq_.eventTime(intevent_dma))
+			break;
 
 		if (ime()) {
 			di();
@@ -452,6 +456,11 @@ unsigned long Memory::stop(unsigned long cc, bool &skip) {
 	}
 
 	return cc;
+}
+
+void Memory::stall(unsigned long cc, unsigned long cycles) {
+	intreq_.halt();
+	intreq_.setEventTime<intevent_unhalt>(cc + cycles);
 }
 
 void Memory::decEventCycles(IntEventId eventId, unsigned long dec) {
