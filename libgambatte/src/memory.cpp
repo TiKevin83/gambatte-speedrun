@@ -214,8 +214,6 @@ unsigned long Memory::event(unsigned long cc) {
 			if (lcden || blanklcd_) {
 				if (intreq_.eventTime(intevent_unhalt) == disabled_time)
 					lcd_.updateScreen(blanklcd_, cc);
-				else
-					lcd_.blackScreen();
 
 				intreq_.setEventTime<intevent_blit>(disabled_time);
 				intreq_.setEventTime<intevent_end>(disabled_time);
