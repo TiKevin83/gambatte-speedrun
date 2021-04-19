@@ -119,10 +119,10 @@ int const xpos_end = 168;
 inline int spx(PPUPriv::Sprite const& s) { return s.spx; }
 
 inline int lcdcEn(PPUPriv const& p) { return p.lcdc & lcdc_en; }
-inline int lcdcWinEn(PPUPriv const& p) { return p.lcdc & lcdc_we; }
+inline int lcdcWinEn(PPUPriv const& p) { return (p.lcdc & lcdc_we) && (p.layersMask & layer_mask_window); }
 inline int lcdcObj2x(PPUPriv const& p) { return p.lcdc & lcdc_obj2x; }
-inline int lcdcObjEn(PPUPriv const& p) { return p.lcdc & lcdc_objen; }
-inline int lcdcBgEn(PPUPriv const& p) { return p.lcdc & lcdc_bgen; }
+inline int lcdcObjEn(PPUPriv const& p) { return (p.lcdc & lcdc_objen) && (p.layersMask & layer_mask_obj); }
+inline int lcdcBgEn(PPUPriv const& p) { return (p.lcdc & lcdc_bgen) && (p.layersMask & layer_mask_bg); }
 
 inline int weMasterCheckLy0LineCycle(bool cgb) { return 1 + cgb; }
 inline int weMasterCheckPriorToLyIncLineCycle(bool /*cgb*/) { return 450; }
@@ -469,7 +469,7 @@ namespace M3Loop {
 
 
 			uint_least32_t* const dst = dbufline + (xpos - tile_len);
-			unsigned const tileword = -(p.lcdc & 1u * lcdc_bgen) & p.ntileword;
+			unsigned const tileword = -((p.lcdc & 1u * lcdc_bgen) & p.layersMask) & p.ntileword;
 
 			dst[0] = p.bgPalette[tileword & tile_bpp_mask];
 			dst[1] = p.bgPalette[(tileword & tile_bpp_mask << 1 * tile_bpp) >> 1 * tile_bpp];
@@ -621,8 +621,8 @@ namespace M3Loop {
 				n = std::min<long>(n, p.cycles & -1ul * tile_len);
 				p.cycles -= n;
 
-				unsigned ntileword = p.ntileword;
-				unsigned nattrib = p.nattrib;
+				unsigned ntileword = -(p.layersMask & layer_mask_bg) & p.ntileword;
+				unsigned nattrib = -(p.layersMask & layer_mask_bg) & p.nattrib;
 				uint_least32_t* dst = dbufline + xpos - tile_len;
 				uint_least32_t* const dstend = dst + n;
 				xpos += n;
@@ -650,7 +650,7 @@ namespace M3Loop {
 					dst += tile_len;
 
 					unsigned const tno = tileMapLine[tileMapXpos % tile_map_len];
-					nattrib = tileMapLine[tileMapXpos % tile_map_len + vram_bank_size];
+					nattrib = -(p.layersMask & layer_mask_bg) & tileMapLine[tileMapXpos % tile_map_len + vram_bank_size];
 					tileMapXpos = tileMapXpos % tile_map_len + 1;
 
 					unsigned const tdo = tdoffset & ~(tno << 5);
@@ -658,7 +658,7 @@ namespace M3Loop {
 						+ (nattrib & attr_yflip ? tdo ^ tile_line_size * (tile_len - 1) : tdo)
 						+ vram_bank_size / attr_tdbank * tdbank(p, nattrib);
 					unsigned short const* const explut = expand_lut + (0x100 / attr_xflip * nattrib & 0x100);
-					ntileword = explut[td[0]] + explut[td[1]] * 2;
+					ntileword = -(p.layersMask & layer_mask_bg) & (explut[td[0]] + explut[td[1]] * 2);
 				} while (dst != dstend);
 
 
@@ -675,8 +675,8 @@ namespace M3Loop {
 			}
 
 			uint_least32_t* const dst = dbufline + (xpos - tile_len);
-			unsigned const tileword = ((p.lcdc & 1u * lcdc_bgen) | !p.cgbDmg) * p.ntileword;;
-			unsigned const attrib = p.nattrib;
+			unsigned const tileword = -(p.layersMask & layer_mask_bg) & (((p.lcdc & 1u * lcdc_bgen) | !p.cgbDmg) * p.ntileword);
+			unsigned const attrib = -(p.layersMask & layer_mask_bg) & p.nattrib;
 			unsigned long const* const bgPalette = p.bgPalette
 				+ (attrib & attr_cgbpalno) * num_palette_entries;
 			dst[0] = bgPalette[tileword & tile_bpp_mask];
@@ -886,8 +886,8 @@ namespace M3Loop {
 				p.winDrawState |= win_draw_start;
 		}
 
-		unsigned const twdata = tileword & ((p.lcdc & lcdc_bgen) | (p.cgb * !p.cgbDmg)) * tile_bpp_mask;
-		unsigned long pixel = p.bgPalette[twdata + (p.attrib & attr_cgbpalno) * num_palette_entries];
+		unsigned const twdata = tileword & ((p.lcdc & lcdc_bgen) | (p.cgb * !p.cgbDmg) & p.layersMask) * tile_bpp_mask;
+		unsigned long pixel = p.bgPalette[twdata + (p.attrib & attr_cgbpalno & -(p.layersMask & layer_mask_bg)) * num_palette_entries];
 		int i = static_cast<int>(p.nextSprite) - 1;
 
 		if (i >= 0 && spx(p.spriteList[i]) > xpos - tile_len) {
@@ -1593,6 +1593,7 @@ PPUPriv::PPUPriv(NextM0Time &nextM0Time, unsigned char const *const oamram, unsi
 , spwordList()
 , nextSprite(0)
 , currentSprite(0xFF)
+, layersMask(layer_mask_bg | layer_mask_window | layer_mask_obj)
 , vram(vram)
 , nextCallPtr(&M2_Ly0::f0_)
 , now(0)

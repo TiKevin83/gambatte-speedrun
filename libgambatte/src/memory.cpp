@@ -211,8 +211,10 @@ unsigned long Memory::event(unsigned long cc) {
 			bool const lcden = ioamhram_[0x140] & lcdc_en;
 			unsigned long blitTime = intreq_.eventTime(intevent_blit);
 
-			if (lcden | blanklcd_) {
-				lcd_.updateScreen(blanklcd_, cc);
+			if (lcden || blanklcd_) {
+				if (intreq_.eventTime(intevent_unhalt) == disabled_time)
+					lcd_.updateScreen(blanklcd_, cc);
+
 				intreq_.setEventTime<intevent_blit>(disabled_time);
 				intreq_.setEventTime<intevent_end>(disabled_time);
 
@@ -639,14 +641,17 @@ unsigned Memory::nontrivial_ff_read(unsigned const p, unsigned long const cc) {
 	case 0x4C:
 		if (!biosMode_)
 			return 0xFF;
+
 		break;
 	case 0x69:
 		if (isCgb() && !isCgbDmg())
 			return lcd_.cgbBgColorRead(ioamhram_[0x168] & 0x3F, cc);
+
 		break;
 	case 0x6B:
 		if (isCgb() && !isCgbDmg())
 			return lcd_.cgbSpColorRead(ioamhram_[0x16A] & 0x3F, cc);
+
 		break;
 	default:
 		break;
@@ -711,30 +716,82 @@ unsigned Memory::nontrivial_read(unsigned const p, unsigned long const cc) {
 	return ioamhram_[p - mm_oam_begin];
 }
 
-unsigned Memory::nontrivial_peek(unsigned const p) {
-	if (p < 0xC000) {
-		if (p < 0x8000)
-			return cart_.romdata(p >> 14)[p];
+unsigned Memory::nontrivial_ff_peek(unsigned const p, unsigned long const cc) {
+	// some regs might be wrong
+	switch (p) {
+	case 0x04:
+		return (cc - tima_.divLastUpdate()) >> 8 & 0xFF;
+	case 0x30:
+	case 0x31:
+	case 0x32:
+	case 0x33:
+	case 0x34:
+	case 0x35:
+	case 0x36:
+	case 0x37:
+	case 0x38:
+	case 0x39:
+	case 0x3A:
+	case 0x3B:
+	case 0x3C:
+	case 0x3D:
+	case 0x3E:
+	case 0x3F:
+		return psg_.waveRamRead(p & 0xF);
+	case 0x44:
+		return lcd_.debugGetLY();
+	case 0x4C:
+		if (!biosMode_)
+			return 0xFF;
 
-		if (p < 0xA000) {
-			return cart_.vrambankptr()[p];
-		}
-
-		if (cart_.rsrambankptr())
-			return cart_.rsrambankptr()[p];
-
-		return cart_.rtcRead(); // verified side-effect free
+		break;
+	default:
+		break;
 	}
-	if (p < 0xFE00)
-		return cart_.wramdata(p >> 12 & 1)[p & 0xFFF];
-	if (p >= 0xFF00 && p < 0xFF80)
-		return nontrivial_ff_peek(p);
-	return ioamhram_[p - 0xFE00];
+
+	return ioamhram_[p + 0x100];
 }
 
-unsigned Memory::nontrivial_ff_peek(unsigned const p) {
-	// some regs may be somewhat wrong with this
-	return ioamhram_[p - 0xFE00];
+unsigned Memory::nontrivial_peek(unsigned const p, unsigned long const cc) {
+	if (p < mm_hram_begin) {
+		if (lastOamDmaUpdate_ != disabled_time) {
+			if (cart_.isInOamDmaConflictArea(p) && oamDmaPos_ < oam_size) {
+				int const r = isCgb() && cart_.oamDmaSrc() != oam_dma_src_wram && p >= mm_wram_begin
+					? cart_.wramdata(ioamhram_[0x146] >> 4 & 1)[p & 0xFFF]
+					: ioamhram_[oamDmaPos_];
+
+				return r;
+			}
+		}
+
+		if (p < mm_wram_begin) {
+			if (p < mm_vram_begin)
+				return cart_.romdata(p >> 14)[p];
+
+			if (p < mm_sram_begin)
+				return cart_.vrambankptr()[p];
+
+			if (cart_.rsrambankptr())
+				return cart_.rsrambankptr()[p];
+
+			if (!cart_.isHuC3())
+				return cart_.rtcRead();
+
+			return 0xFF;
+		}
+
+		if (p < mm_oam_begin)
+			return cart_.wramdata(p >> 12 & 1)[p & 0xFFF];
+
+		long const ffp = static_cast<long>(p) - mm_io_begin;
+		if (ffp >= 0)
+			return nontrivial_ff_peek(ffp, cc);
+
+		if (oamDmaPos_ < oam_size)
+			return 0xFF;
+	}
+
+	return ioamhram_[p - mm_oam_begin];
 }
 
 void Memory::nontrivial_ff_write(unsigned const p, unsigned data, unsigned long const cc) {

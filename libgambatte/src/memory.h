@@ -151,17 +151,17 @@ public:
 	unsigned read(unsigned p, unsigned long cc) {
 		if (readCallback_)
 			readCallback_(p, (cc - basetime_) >> 1);
-		if(biosMode_) {
-			if (p < biosSize_ && !(p >= 0x100 && p < 0x200))
+
+		if (biosMode_ && p < biosSize_ && !(p >= 0x100 && p < 0x200))
 				return readBios(p);
-		}
+
 		else if(cdCallback_) {
 			CDMapResult map = CDMap(p);
 			if(map.type != eCDLog_AddrType_None)
 				cdCallback_(map.addr, map.type, eCDLog_Flags_Data);
 		}
 		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
-			p = p & 0xA1FF;
+			p &= 0xA1FF;
 			return (cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc)) | 0xF0;
 		}
 		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
@@ -170,43 +170,57 @@ public:
 	unsigned read_excb(unsigned p, unsigned long cc, bool first) {
 		if (execCallback_)
 			execCallback_(p, (cc - basetime_) >> 1);
-		if (biosMode_) {
-			if(p < biosSize_ && !(p >= 0x100 && p < 0x200))
+
+		if (biosMode_ && p < biosSize_ && !(p >= 0x100 && p < 0x200))
 				return readBios(p);
-		}
+
 		else if(cdCallback_) {
 			CDMapResult map = CDMap(p);
 			if(map.type != eCDLog_AddrType_None)
 				cdCallback_(map.addr, map.type, first ? eCDLog_Flags_ExecFirst : eCDLog_Flags_ExecOperand);
 		}
+		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
+			p &= 0xA1FF;
+			return (cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc)) | 0xF0;
+		}
 		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_read(p, cc);
 	}
 
-	unsigned peek(unsigned p) {
-		if (biosMode_ && p < biosSize_ && !(p >= 0x100 && p < 0x200)) {
+	unsigned peek(unsigned p, unsigned long cc) {
+		if (biosMode_ && p < biosSize_ && !(p >= 0x100 && p < 0x200))
 			return readBios(p);
+
+		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
+			p &= 0xA1FF;
+			return (cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_peek(p, cc)) | 0xF0;
 		}
-		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_peek(p);
+		return cart_.rmem(p >> 12) ? cart_.rmem(p >> 12)[p] : nontrivial_peek(p, cc);
 	}
 
 	void write_nocb(unsigned p, unsigned data, unsigned long cc) {
-		if (cart_.wmem(p >> 12)) {
+		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
+			p &= 0xA1FF;
+			data |= 0xF0;
+		}
+		if (cart_.wmem(p >> 12))
 			cart_.wmem(p >> 12)[p] = data;
-		} else
+		else
 			nontrivial_write(p, data, cc);
 	}
 
 	void write(unsigned p, unsigned data, unsigned long cc) {
 		if (cart_.isMbc2() && (p >= mm_sram_begin && p < mm_wram_begin)) {
-			p = p & 0xA1FF;
-			data = data | 0xF0;
+			p &= 0xA1FF;
+			data |= 0xF0;
 		}
-		if (cart_.wmem(p >> 12)) {
+		if (cart_.wmem(p >> 12))
 			cart_.wmem(p >> 12)[p] = data;
-		} else
+		else
 			nontrivial_write(p, data, cc);
+
 		if (writeCallback_)
 			writeCallback_(p, (cc - basetime_) >> 1);
+
 		if(cdCallback_ && !biosMode_) {
 			CDMapResult map = CDMap(p);
 			if(map.type != eCDLog_AddrType_None)
@@ -215,10 +229,11 @@ public:
 	}
 
 	void ff_write(unsigned p, unsigned data, unsigned long cc) {
-		if (p - 0x80u < 0x7Fu) {
+		if (p - 0x80u < 0x7Fu)
 			ioamhram_[p + 0x100] = data;
-		} else
+		else
 			nontrivial_ff_write(p, data, cc);
+
 		if (writeCallback_)
 			writeCallback_(0xff00 + p, (cc - basetime_) >> 1);
 		if(cdCallback_ && !biosMode_)
@@ -326,10 +341,10 @@ private:
 	unsigned long dma(unsigned long cc);
 	unsigned nontrivial_ff_read(unsigned p, unsigned long cycleCounter);
 	unsigned nontrivial_read(unsigned p, unsigned long cycleCounter);
+	unsigned nontrivial_ff_peek(unsigned p, unsigned long cycleCounter);
+	unsigned nontrivial_peek(unsigned p, unsigned long cycleCounter);
 	void nontrivial_ff_write(unsigned p, unsigned data, unsigned long cycleCounter);
 	void nontrivial_write(unsigned p, unsigned data, unsigned long cycleCounter);
-	unsigned nontrivial_peek(unsigned p);
-	unsigned nontrivial_ff_peek(unsigned p);
 	void updateSerial(unsigned long cc);
 	void updateTimaIrq(unsigned long cc);
 	void updateIrqs(unsigned long cc);

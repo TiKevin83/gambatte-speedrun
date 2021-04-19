@@ -291,12 +291,12 @@ bool LCD::vramReadable(unsigned long const cc) {
 }
 
 bool LCD::vramExactlyReadable(unsigned long const cc) {
-	if (vramHasBeenExactlyRead) {
+	if (vramHasBeenExactlyRead)
 		return false;
-	}
-	if (cc + 2 + isDoubleSpeed() == m0TimeOfCurrentLine(cc)) {
+
+	if (cc + 2 + isDoubleSpeed() == m0TimeOfCurrentLine(cc))
 		vramHasBeenExactlyRead = true;
-	}
+
 	return cc + 2 + isDoubleSpeed() == m0TimeOfCurrentLine(cc);
 }
 

@@ -97,7 +97,9 @@ public:
 
 	void setBios(char const *buffer, std::size_t size) { mem_.setBios(buffer, size); }
 
-	unsigned char externalRead(unsigned short addr) {return mem_.peek(addr); }
+	unsigned char externalRead(unsigned short addr) {
+		return mem_.peek(addr, cycleCounter_);
+	}
 
 	void externalWrite(unsigned short addr, unsigned char val) {
 		mem_.write_nocb(addr, val, cycleCounter_);
