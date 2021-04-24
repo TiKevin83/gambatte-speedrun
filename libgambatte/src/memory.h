@@ -43,8 +43,8 @@ public:
 	void setStatePtrs(SaveState &state);
 	void saveRtcState(SaveState& state, unsigned long cc);
 	void loadState(SaveState const &state);
-	void loadSavedata(char const *data, unsigned long const cc) { cart_.loadSavedata(data, cc); }
-	int saveSavedataLength() {return cart_.saveSavedataLength(); }
+	void loadSavedata(char const *data, unsigned long const cc, bool isDeterministic) { cart_.loadSavedata(data, cc, isDeterministic); }
+	int saveSavedataLength(bool isDeterministic) { return cart_.saveSavedataLength(isDeterministic); }
 	void saveSavedata(char *dest, unsigned long const cc) { cart_.saveSavedata(dest, cc); }
 	void updateInput();
 

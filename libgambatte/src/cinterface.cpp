@@ -133,12 +133,12 @@ GBEXPORT void gambatte_savesavedata(GB *g, char *dest) {
 	g->saveSavedata(dest);
 }
 
-GBEXPORT void gambatte_loadsavedata(GB *g, char const *data) {
-	g->loadSavedata(data);
+GBEXPORT void gambatte_loadsavedata(GB *g, char const *data, bool isDeterministic) {
+	g->loadSavedata(data, isDeterministic);
 }
 
-GBEXPORT int gambatte_savesavedatalength(GB *g) {
-	return g->saveSavedataLength();
+GBEXPORT int gambatte_savesavedatalength(GB *g, bool isDeterministic) {
+	return g->saveSavedataLength(isDeterministic);
 }
 
 GBEXPORT int gambatte_newstatelen(GB *g) {

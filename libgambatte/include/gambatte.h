@@ -139,12 +139,20 @@ public:
 	/** Returns true if a ROM image is loaded. */
 	bool isLoaded() const;
 
-	/** Writes persistent cartridge data to disk. NOT Done implicitly on ROM close. */
-	void loadSavedata(char const *data);
-	int saveSavedataLength();
-	void saveSavedata(char *dest);
+	/** Writes persistent cartridge data to disk. NOT done implicitly on ROM close. */
+	void saveSavedata(char* dest);
 
-	// 0 = vram, 1 = rom, 2 = wram, 3 = cartram, 4 = oam, 5 = hram
+	/** Returns save data length expected.
+	  * Deterministic emulation will ignore RTC data, if any.
+	  */
+	int saveSavedataLength(bool isDeterministic);
+
+	/** Loads persistent cartridge data from disk. 
+	  * Deterministic emulation will ignore RTC data, if any.
+	  */
+	void loadSavedata(char const *data, bool isDeterministic);
+
+	/** 0 = vram, 1 = rom, 2 = wram, 3 = cartram, 4 = oam, 5 = hram */
 	bool getMemoryArea(int which, unsigned char **data, int *length);
 
 	/** ROM header title of currently loaded ROM image. */

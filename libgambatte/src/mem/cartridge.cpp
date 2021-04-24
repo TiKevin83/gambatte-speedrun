@@ -898,7 +898,7 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 
 enum { Dh = 0, Dl = 1, H = 2, M = 3, S = 4, C = 5, L = 6};
 
-void Cartridge::loadSavedata(char const *data, unsigned long const cc) {
+void Cartridge::loadSavedata(char const *data, unsigned long const cc, bool isDeterministic) {
 	if (hasBattery(memptrs_.romdata()[0x147])) {
 		int length = memptrs_.rambankdataend() - memptrs_.rambankdata();
 		std::memcpy(memptrs_.rambankdata(), data, length);
@@ -906,7 +906,7 @@ void Cartridge::loadSavedata(char const *data, unsigned long const cc) {
 		enforce8bit(memptrs_.rambankdata(), length);
 	}
 
-	if (hasRtc(memptrs_.romdata()[0x147])) {
+	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
 		timeval basetime;
 		basetime.tv_sec = (*data++ & 0xFF);
 		basetime.tv_sec = basetime.tv_sec << 8 | (*data++ & 0xFF);
@@ -916,7 +916,7 @@ void Cartridge::loadSavedata(char const *data, unsigned long const cc) {
 		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
 		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
 		basetime.tv_usec = basetime.tv_usec << 8 | (*data++ & 0xFF);
-		
+
 		if (basetime.tv_sec > Time::now().tv_sec) // prevent malformed save files from giving negative times
 			basetime = Time::now();
 
@@ -944,12 +944,12 @@ void Cartridge::loadSavedata(char const *data, unsigned long const cc) {
 	}
 }
 
-int Cartridge::saveSavedataLength() {
+int Cartridge::saveSavedataLength(bool isDeterministic) {
 	int ret = 0;
 	if (hasBattery(memptrs_.romdata()[0x147])) {
 		ret = memptrs_.rambankdataend() - memptrs_.rambankdata();
 	}
-	if (hasRtc(memptrs_.romdata()[0x147])) {
+	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
 		ret += isHuC3() ? 8 : 8 + 11;
 	}
 	return ret;
