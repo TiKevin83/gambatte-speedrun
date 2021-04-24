@@ -292,10 +292,14 @@ public:
 	}
 
 	void setCgbPalette(unsigned *lut);
+
 	void setTimeMode(bool useCycles, unsigned long const cc) {
 		cart_.setTimeMode(useCycles, cc);
 	}
 	void setRtcDivisorOffset(long const rtcDivisorOffset) { cart_.setRtcDivisorOffset(rtcDivisorOffset); }
+	
+	void getRtcRegs(unsigned long *dest, unsigned long cc) { cart_.getRtcRegs(dest, cc); }
+	void setRtcRegs(unsigned long *src) { cart_.setRtcRegs(src); }
 
 	int linkStatus(int which);
 

@@ -156,6 +156,20 @@ public:
 	int linkStatus(int which);
 
 	void getRegs(int *dest);
+	
+	/**
+	  * Get MBC3 RTC reg values.
+	  * @param dest length of at least 11, please
+	  *             [dh, dl, h, m, s, c, dhl, dll, hl, ml, sl]
+	  */
+	void getRtcRegs(unsigned long *dest);
+
+	/**
+	  * Set MBC3 RTC reg values.
+	  * @param src length of at least 11, please
+	  *            [dh, dl, h, m, s, c, dhl, dll, hl, ml, sl]
+	  */
+	void setRtcRegs(unsigned long *src);
 
 	void setInterruptAddresses(int *addrs, int numAddrs);
 	int getHitInterruptAddress();

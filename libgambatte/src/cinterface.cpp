@@ -194,6 +194,14 @@ GBEXPORT void gambatte_getregs(GB *g, int *dest) {
 	g->getRegs(dest);
 }
 
+GBEXPORT void gambatte_getrtcregs(GB *g, unsigned long *dest) {
+	g->getRtcRegs(dest);
+}
+
+GBEXPORT void gambatte_setrtcregs(GB *g, unsigned long *src) {
+	g->setRtcRegs(src);
+}
+
 GBEXPORT void gambatte_setinterruptaddresses(GB *g, int *addrs, int numAddrs) {
 	g->setInterruptAddresses(addrs, numAddrs);
 }

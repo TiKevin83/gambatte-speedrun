@@ -264,7 +264,7 @@ SaverList::SaverList()
 	{ static char const label[] = { b,i,o,s,       NUL }; ADD(mem.biosMode); }
 	{ static char const label[] = { s,t,o,p,p,e,d, NUL }; ADD(mem.stopped); }
 	{ static char const label[] = { h,u,c,NO3,r,a,m, NUL }; ADD(mem.HuC3RAMflag); }
-	{ static char const label[] = { s,g,b,s,y,s,   NUL }; ADDPTR(mem.sgb.systemColors); }
+	/*{ static char const label[] = { s,g,b,s,y,s,   NUL }; ADDPTR(mem.sgb.systemColors); }
 	{ static char const label[] = { s,g,b,c,o,l,s, NUL }; ADDPTR(mem.sgb.colors); }
 	{ static char const label[] = { s,g,b,a,t,t,r, NUL }; ADDPTR(mem.sgb.attributes); }
 	{ static char const label[] = { s,g,b,p,k,t,   NUL }; ADDPTR(mem.sgb.packet); }
@@ -276,7 +276,7 @@ SaverList::SaverList()
 	{ static char const label[] = { s,g,b,p,e,n,d, NUL }; ADD(mem.sgb.pending); }
 	{ static char const label[] = { s,g,b,p,c,     NUL }; ADD(mem.sgb.pendingCount); }
 	{ static char const label[] = { s,g,b,m,a,s,k, NUL }; ADD(mem.sgb.mask); }
-	{ static char const label[] = { d,m,g,c,o,l,s, NUL }; ADDPTR(ppu.dmgColorsBgr15); }
+	{ static char const label[] = { d,m,g,c,o,l,s, NUL }; ADDPTR(ppu.dmgColorsBgr15); }*/
 	{ static char const label[] = { b,g,p,         NUL }; ADDPTR(ppu.bgpData); }
 	{ static char const label[] = { o,b,j,p,       NUL }; ADDPTR(ppu.objpData); }
 	{ static char const label[] = { s,p,o,s,b,u,f, NUL }; ADDPTR(ppu.oamReaderBuf); }
@@ -356,13 +356,17 @@ SaverList::SaverList()
 	{ static char const label[] = { t,i,m,e,l,t,s, NUL }; ADD(time.lastTimeSec); }
 	{ static char const label[] = { t,i,m,e,l,t,u, NUL }; ADD(time.lastTimeUsec); }
 	{ static char const label[] = { t,i,m,e,l,c,   NUL }; ADD(time.lastCycles); }
-	{ static char const label[] = { r,t,c,h,a,l,t, NUL }; ADD(rtc.haltTime); }
 	{ static char const label[] = { r,t,c,d,h,     NUL }; ADD(rtc.dataDh); }
 	{ static char const label[] = { r,t,c,d,l,     NUL }; ADD(rtc.dataDl); }
 	{ static char const label[] = { r,t,c,h,       NUL }; ADD(rtc.dataH); }
 	{ static char const label[] = { r,t,c,m,       NUL }; ADD(rtc.dataM); }
 	{ static char const label[] = { r,t,c,s,       NUL }; ADD(rtc.dataS); }
-	{ static char const label[] = { r,t,c,l,l,d,   NUL }; ADD(rtc.lastLatchData); }
+	{ static char const label[] = { r,t,c,c,       NUL }; ADD(rtc.dataC); }
+	{ static char const label[] = { r,t,c,l,d,h,   NUL }; ADD(rtc.latchDh); }
+	{ static char const label[] = { r,t,c,l,d,l,   NUL }; ADD(rtc.latchDl); }
+	{ static char const label[] = { r,t,c,l,h,     NUL }; ADD(rtc.latchH); }
+	{ static char const label[] = { r,t,c,l,m,     NUL }; ADD(rtc.latchM); }
+	{ static char const label[] = { r,t,c,l,s,     NUL }; ADD(rtc.latchS); }
 	{ static char const label[] = { h,NO3,h,a,l,t,t, NUL }; ADD(huc3.haltTime); }
 	{ static char const label[] = { h,NO3,d,a,t,a,t, NUL }; ADD(huc3.dataTime); }
 	{ static char const label[] = { h,NO3,w,r,i,t,t, NUL }; ADD(huc3.writingTime); }

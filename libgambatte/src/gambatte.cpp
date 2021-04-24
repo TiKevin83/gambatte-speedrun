@@ -221,6 +221,14 @@ void GB::getRegs(int *dest) {
 	p_->cpu.getRegs(dest);
 }
 
+void GB::getRtcRegs(unsigned long *dest) {
+	p_->cpu.getRtcRegs(dest);
+}
+
+void GB::setRtcRegs(unsigned long *src) {
+	p_->cpu.setRtcRegs(src);
+}
+
 void GB::setInterruptAddresses(int *addrs, int numAddrs) {
 	p_->cpu.setInterruptAddresses(addrs, numAddrs);
 }
