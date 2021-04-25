@@ -159,14 +159,16 @@ bool GB::isLoaded() const {
 	return p_->cpu.loaded();
 }
 
-void GB::saveSavedata(char *dest) {
+void GB::saveSavedata(char *dest, bool isDeterministic) {
 	if (p_->cpu.loaded())
-		p_->cpu.saveSavedata(dest);
+		p_->cpu.saveSavedata(dest, isDeterministic);
 }
-void GB::loadSavedata(char const *data, bool isDeterministic) {
+
+void GB::loadSavedata(char const* data, bool isDeterministic) {
 	if (p_->cpu.loaded())
 		p_->cpu.loadSavedata(data, isDeterministic);
 }
+
 int GB::saveSavedataLength(bool isDeterministic) {
 	if (p_->cpu.loaded())
 		return p_->cpu.saveSavedataLength(isDeterministic);

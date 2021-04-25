@@ -32,9 +32,9 @@ public:
 	void saveRtcState(SaveState& state);
 	void loadState(SaveState const &state);
 	void setLayers(unsigned mask) { mem_.setLayers(mask); }
+	void saveSavedata(char* dest, bool isDeterministic) { mem_.saveSavedata(dest, cycleCounter_, isDeterministic); }
 	void loadSavedata(char const *data, bool isDeterministic) { mem_.loadSavedata(data, cycleCounter_, isDeterministic); }
-	int saveSavedataLength(bool isDeterministic) {return mem_.saveSavedataLength(isDeterministic); }
-	void saveSavedata(char *dest) { mem_.saveSavedata(dest, cycleCounter_); }
+	int saveSavedataLength(bool isDeterministic) { return mem_.saveSavedataLength(isDeterministic); }
 
 	bool getMemoryArea(int which, unsigned char **data, int *length) { return mem_.getMemoryArea(which, data, length); }
 

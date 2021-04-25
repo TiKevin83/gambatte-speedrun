@@ -98,9 +98,9 @@ public:
 	void setRtcRegs(unsigned long *src) { rtc_.setRtcRegs(src); }
 	void rtcWrite(unsigned data, unsigned long const cc) { rtc_.write(data, cc); }
 	unsigned char rtcRead() const { return *rtc_.activeLatch(); }
-	int saveSavedataLength(bool isDeterministic);
-	void saveSavedata(char *dest, unsigned long cycleCounter);
+	void saveSavedata(char *dest, unsigned long cycleCounter, bool isDeterministic);
 	void loadSavedata(char const *data, unsigned long cycleCounter, bool isDeterministic);
+	int saveSavedataLength(bool isDeterministic);
 	bool getMemoryArea(int which, unsigned char **data, int *length) const;
 	LoadRes loadROM(char const *romfiledata, unsigned romfilelength, bool cgbMode, bool multicartCompat);
 	char const * romTitle() const { return reinterpret_cast<char const *>(memptrs_.romdata() + 0x134); }

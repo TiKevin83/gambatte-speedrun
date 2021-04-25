@@ -896,7 +896,56 @@ LoadRes Cartridge::loadROM(char const *romfiledata, unsigned romfilelength, bool
 	return LOADRES_OK;
 }
 
-enum { Dh = 0, Dl = 1, H = 2, M = 3, S = 4, C = 5, L = 6};
+enum { Dh = 0, Dl = 1, H = 2, M = 3, S = 4, C = 5, L = 6 };
+
+int Cartridge::saveSavedataLength(bool isDeterministic) {
+	int ret = 0;
+	if (hasBattery(memptrs_.romdata()[0x147])) {
+		ret = memptrs_.rambankdataend() - memptrs_.rambankdata();
+	}
+	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
+		ret += isHuC3() ? 8 : 8 + 11;
+	}
+	return ret;
+}
+
+void Cartridge::saveSavedata(char* dest, unsigned long const cc, bool isDeterministic) {
+	if (hasBattery(memptrs_.romdata()[0x147])) {
+		int length = memptrs_.rambankdataend() - memptrs_.rambankdata();
+		std::memcpy(dest, memptrs_.rambankdata(), length);
+		dest += length;
+	}
+
+	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
+		timeval basetime = time_.baseTime(cc, isHuC3());
+		*dest++ = (basetime.tv_sec >> 24 & 0xFF);
+		*dest++ = (basetime.tv_sec >> 16 & 0xFF);
+		*dest++ = (basetime.tv_sec >> 8 & 0xFF);
+		*dest++ = (basetime.tv_sec & 0xFF);
+		*dest++ = (basetime.tv_usec >> 24 & 0xFF);
+		*dest++ = (basetime.tv_usec >> 16 & 0xFF);
+		*dest++ = (basetime.tv_usec >> 8 & 0xFF);
+		*dest++ = (basetime.tv_usec & 0xFF);
+		if (!isHuC3()) {
+			unsigned long rtcRegs[11];
+			getRtcRegs(rtcRegs, cc);
+			*dest++ = (rtcRegs[Dh] & 0xC1);
+			*dest++ = (rtcRegs[Dl] & 0xFF);
+			*dest++ = (rtcRegs[H] & 0x1F);
+			*dest++ = (rtcRegs[M] & 0x3F);
+			*dest++ = (rtcRegs[S] & 0x3F);
+			*dest++ = (rtcRegs[C] >> 24 & 0xFF);
+			*dest++ = (rtcRegs[C] >> 16 & 0xFF);
+			*dest++ = (rtcRegs[C] >> 8 & 0xFF);
+			*dest++ = (rtcRegs[C] & 0xFF);
+			*dest++ = (rtcRegs[Dh + L] & 0xC1);
+			*dest++ = (rtcRegs[Dl + L] & 0xFF);
+			*dest++ = (rtcRegs[H + L] & 0x1F);
+			*dest++ = (rtcRegs[M + L] & 0x3F);
+			*dest++ = (rtcRegs[S + L] & 0x3F);
+		}
+	}
+}
 
 void Cartridge::loadSavedata(char const *data, unsigned long const cc, bool isDeterministic) {
 	if (hasBattery(memptrs_.romdata()[0x147])) {
@@ -940,55 +989,6 @@ void Cartridge::loadSavedata(char const *data, unsigned long const cc, bool isDe
 			rtcRegs[S+L] = *data++ & 0x3F;
 			setRtcRegs(rtcRegs);
 			rtc_.setBaseTime(basetime, cc);
-		}
-	}
-}
-
-int Cartridge::saveSavedataLength(bool isDeterministic) {
-	int ret = 0;
-	if (hasBattery(memptrs_.romdata()[0x147])) {
-		ret = memptrs_.rambankdataend() - memptrs_.rambankdata();
-	}
-	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
-		ret += isHuC3() ? 8 : 8 + 11;
-	}
-	return ret;
-}
-
-void Cartridge::saveSavedata(char *dest, unsigned long const cc) {
-	if (hasBattery(memptrs_.romdata()[0x147])) {
-		int length = memptrs_.rambankdataend() - memptrs_.rambankdata();
-		std::memcpy(dest, memptrs_.rambankdata(), length);
-		dest += length;
-	}
-
-	if (hasRtc(memptrs_.romdata()[0x147])) {
-		timeval basetime = time_.baseTime(cc, isHuC3());
-		*dest++ = (basetime.tv_sec  >> 24 & 0xFF);
-		*dest++ = (basetime.tv_sec  >> 16 & 0xFF);
-		*dest++ = (basetime.tv_sec  >>  8 & 0xFF);
-		*dest++ = (basetime.tv_sec        & 0xFF);
-		*dest++ = (basetime.tv_usec >> 24 & 0xFF);
-		*dest++ = (basetime.tv_usec >> 16 & 0xFF);
-		*dest++ = (basetime.tv_usec >>  8 & 0xFF);
-		*dest++ = (basetime.tv_usec       & 0xFF);
-		if (!isHuC3()) {
-			unsigned long rtcRegs [11];
-			getRtcRegs(rtcRegs, cc);
-			*dest++ = (rtcRegs[Dh]      & 0xC1);
-			*dest++ = (rtcRegs[Dl]      & 0xFF);
-			*dest++ = (rtcRegs[H]       & 0x1F);
-			*dest++ = (rtcRegs[M]       & 0x3F);
-			*dest++ = (rtcRegs[S]       & 0x3F);
-			*dest++ = (rtcRegs[C] >> 24 & 0xFF);
-			*dest++ = (rtcRegs[C] >> 16 & 0xFF);
-			*dest++ = (rtcRegs[C] >>  8 & 0xFF);
-			*dest++ = (rtcRegs[C]       & 0xFF);
-			*dest++ = (rtcRegs[Dh+L]    & 0xC1);
-			*dest++ = (rtcRegs[Dl+L]    & 0xFF);
-			*dest++ = (rtcRegs[H+L]     & 0x1F);
-			*dest++ = (rtcRegs[M+L]     & 0x3F);
-			*dest++ = (rtcRegs[S+L]     & 0x3F);
 		}
 	}
 }

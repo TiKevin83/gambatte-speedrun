@@ -129,8 +129,8 @@ GBEXPORT int gambatte_isloaded(GB *g) {
 	return g->isLoaded();
 }
 
-GBEXPORT void gambatte_savesavedata(GB *g, char *dest) {
-	g->saveSavedata(dest);
+GBEXPORT void gambatte_savesavedata(GB *g, char *dest, bool isDeterministic) {
+	g->saveSavedata(dest, isDeterministic);
 }
 
 GBEXPORT void gambatte_loadsavedata(GB *g, char const *data, bool isDeterministic) {
