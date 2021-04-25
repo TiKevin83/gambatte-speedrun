@@ -904,7 +904,7 @@ int Cartridge::saveSavedataLength(bool isDeterministic) {
 		ret = memptrs_.rambankdataend() - memptrs_.rambankdata();
 	}
 	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
-		ret += isHuC3() ? 8 : 8 + 11;
+		ret += isHuC3() ? 8 : (8 + 14);
 	}
 	return ret;
 }
