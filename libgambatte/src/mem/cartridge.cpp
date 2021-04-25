@@ -918,31 +918,31 @@ void Cartridge::saveSavedata(char* dest, unsigned long const cc, bool isDetermin
 
 	if (hasRtc(memptrs_.romdata()[0x147]) && !isDeterministic) {
 		timeval basetime = time_.baseTime(cc, isHuC3());
-		*dest++ = (basetime.tv_sec >> 24 & 0xFF);
-		*dest++ = (basetime.tv_sec >> 16 & 0xFF);
-		*dest++ = (basetime.tv_sec >> 8 & 0xFF);
-		*dest++ = (basetime.tv_sec & 0xFF);
+		*dest++ = (basetime.tv_sec  >> 24 & 0xFF);
+		*dest++ = (basetime.tv_sec  >> 16 & 0xFF);
+		*dest++ = (basetime.tv_sec  >> 8  & 0xFF);
+		*dest++ = (basetime.tv_sec        & 0xFF);
 		*dest++ = (basetime.tv_usec >> 24 & 0xFF);
 		*dest++ = (basetime.tv_usec >> 16 & 0xFF);
-		*dest++ = (basetime.tv_usec >> 8 & 0xFF);
-		*dest++ = (basetime.tv_usec & 0xFF);
+		*dest++ = (basetime.tv_usec >> 8  & 0xFF);
+		*dest++ = (basetime.tv_usec       & 0xFF);
 		if (!isHuC3()) {
 			unsigned long rtcRegs[11];
 			getRtcRegs(rtcRegs, cc);
-			*dest++ = (rtcRegs[Dh] & 0xC1);
-			*dest++ = (rtcRegs[Dl] & 0xFF);
-			*dest++ = (rtcRegs[H] & 0x1F);
-			*dest++ = (rtcRegs[M] & 0x3F);
-			*dest++ = (rtcRegs[S] & 0x3F);
+			*dest++ = (rtcRegs[Dh]      & 0xC1);
+			*dest++ = (rtcRegs[Dl]      & 0xFF);
+			*dest++ = (rtcRegs[H]       & 0x1F);
+			*dest++ = (rtcRegs[M]       & 0x3F);
+			*dest++ = (rtcRegs[S]       & 0x3F);
 			*dest++ = (rtcRegs[C] >> 24 & 0xFF);
 			*dest++ = (rtcRegs[C] >> 16 & 0xFF);
-			*dest++ = (rtcRegs[C] >> 8 & 0xFF);
-			*dest++ = (rtcRegs[C] & 0xFF);
-			*dest++ = (rtcRegs[Dh + L] & 0xC1);
-			*dest++ = (rtcRegs[Dl + L] & 0xFF);
-			*dest++ = (rtcRegs[H + L] & 0x1F);
-			*dest++ = (rtcRegs[M + L] & 0x3F);
-			*dest++ = (rtcRegs[S + L] & 0x3F);
+			*dest++ = (rtcRegs[C] >> 8  & 0xFF);
+			*dest++ = (rtcRegs[C]       & 0xFF);
+			*dest++ = (rtcRegs[Dh+L]    & 0xC1);
+			*dest++ = (rtcRegs[Dl+L]    & 0xFF);
+			*dest++ = (rtcRegs[H+L]     & 0x1F);
+			*dest++ = (rtcRegs[M+L]     & 0x3F);
+			*dest++ = (rtcRegs[S+L]     & 0x3F);
 		}
 	}
 }
