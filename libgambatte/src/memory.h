@@ -43,9 +43,9 @@ public:
 	void setStatePtrs(SaveState &state);
 	void saveRtcState(SaveState& state, unsigned long cc);
 	void loadState(SaveState const &state);
-	void loadSavedata(char const *data, unsigned long const cc) { cart_.loadSavedata(data, cc); }
-	int saveSavedataLength() {return cart_.saveSavedataLength(); }
-	void saveSavedata(char *dest, unsigned long const cc) { cart_.saveSavedata(dest, cc); }
+	void saveSavedata(char* dest, unsigned long const cc, bool isDeterministic) { cart_.saveSavedata(dest, cc, isDeterministic); }
+	void loadSavedata(char const *data, unsigned long const cc, bool isDeterministic) { cart_.loadSavedata(data, cc, isDeterministic); }
+	int saveSavedataLength(bool isDeterministic) { return cart_.saveSavedataLength(isDeterministic); }
 	void updateInput();
 
 	void setBios(char const *buffer, std::size_t size) {
@@ -292,10 +292,14 @@ public:
 	}
 
 	void setCgbPalette(unsigned *lut);
+
 	void setTimeMode(bool useCycles, unsigned long const cc) {
 		cart_.setTimeMode(useCycles, cc);
 	}
 	void setRtcDivisorOffset(long const rtcDivisorOffset) { cart_.setRtcDivisorOffset(rtcDivisorOffset); }
+	
+	void getRtcRegs(unsigned long *dest, unsigned long cc) { cart_.getRtcRegs(dest, cc); }
+	void setRtcRegs(unsigned long *src) { cart_.setRtcRegs(src); }
 
 	int linkStatus(int which);
 

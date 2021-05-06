@@ -87,10 +87,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\libgambatte\src\array.h" />
-    <ClInclude Include="include\gambatte.h" />
-    <ClInclude Include="include\gbint.h" />
-    <ClInclude Include="include\loadres.h" />
+    <ClInclude Include="..\..\common\array.h" />
+    <ClInclude Include="..\..\libgambatte\include\gambatte.h" />
+    <ClInclude Include="..\..\libgambatte\include\gbint.h" />
+    <ClInclude Include="..\..\libgambatte\include\loadres.h" />
     <ClInclude Include="..\..\libgambatte\src\interrupter.h" />
     <ClInclude Include="..\..\libgambatte\src\cinterface.h" />
     <ClInclude Include="..\..\libgambatte\src\counterdef.h" />

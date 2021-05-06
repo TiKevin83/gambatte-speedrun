@@ -159,17 +159,19 @@ bool GB::isLoaded() const {
 	return p_->cpu.loaded();
 }
 
-void GB::saveSavedata(char *dest) {
+void GB::saveSavedata(char *dest, bool isDeterministic) {
 	if (p_->cpu.loaded())
-		p_->cpu.saveSavedata(dest);
+		p_->cpu.saveSavedata(dest, isDeterministic);
 }
-void GB::loadSavedata(char const *data) {
+
+void GB::loadSavedata(char const* data, bool isDeterministic) {
 	if (p_->cpu.loaded())
-		p_->cpu.loadSavedata(data);
+		p_->cpu.loadSavedata(data, isDeterministic);
 }
-int GB::saveSavedataLength() {
+
+int GB::saveSavedataLength(bool isDeterministic) {
 	if (p_->cpu.loaded())
-		return p_->cpu.saveSavedataLength();
+		return p_->cpu.saveSavedataLength(isDeterministic);
 	else
 		return -1;
 }
@@ -219,6 +221,14 @@ int GB::linkStatus(int which) {
 
 void GB::getRegs(int *dest) {
 	p_->cpu.getRegs(dest);
+}
+
+void GB::getRtcRegs(unsigned long *dest) {
+	p_->cpu.getRtcRegs(dest);
+}
+
+void GB::setRtcRegs(unsigned long *src) {
+	p_->cpu.setRtcRegs(src);
 }
 
 void GB::setInterruptAddresses(int *addrs, int numAddrs) {

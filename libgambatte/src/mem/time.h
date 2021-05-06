@@ -46,19 +46,23 @@ public:
 	}
 
 	Time();
-	void saveRtcState(SaveState& state, unsigned long cycleCounter);
+	void saveRtcState(SaveState& state, unsigned long cycleCounter, bool isHuC3);
 	void loadState(SaveState const &state);
 
 	std::time_t get(unsigned long cycleCounter);
 	void set(std::time_t seconds, unsigned long cycleCounter);
 	void reset(std::time_t seconds, unsigned long cycleCounter);
-	void resetCc(unsigned long oldCc, unsigned long newCc);
-	void speedChange(unsigned long cycleCounter);
+	void resetCc(unsigned long oldCc, unsigned long newCc, bool isHuC3);
+	void speedChange(unsigned long cycleCounter, bool isHuC3);
 
-	timeval baseTime(unsigned long cycleCounter);
+	timeval baseTime(unsigned long cycleCounter, bool isHuC3);
 	void setBaseTime(timeval baseTime, unsigned long cycleCounter);
-	void setTimeMode(bool useCycles, unsigned long cycleCounter);
+	void setTimeMode(bool useCycles, unsigned long cycleCounter, bool isHuC3);
 	void setRtcDivisorOffset(long const rtcDivisorOffset) { rtcDivisor_ = 0x400000L + rtcDivisorOffset; }
+	
+	unsigned long getRtcDivisor() { return rtcDivisor_; }
+	
+	unsigned long diff(unsigned long cycleCounter);
 
 private:
 	std::time_t seconds_;

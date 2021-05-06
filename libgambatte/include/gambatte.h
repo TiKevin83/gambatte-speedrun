@@ -139,12 +139,22 @@ public:
 	/** Returns true if a ROM image is loaded. */
 	bool isLoaded() const;
 
-	/** Writes persistent cartridge data to disk. NOT Done implicitly on ROM close. */
-	void loadSavedata(char const *data);
-	int saveSavedataLength();
-	void saveSavedata(char *dest);
+	/** Writes persistent cartridge data to disk. NOT done implicitly on ROM close.
+	  * Deterministic emulation will ignore RTC data, if any.
+	  */
+	void saveSavedata(char* dest, bool isDeterministic);
 
-	// 0 = vram, 1 = rom, 2 = wram, 3 = cartram, 4 = oam, 5 = hram
+	/** Loads persistent cartridge data from disk. 
+	  * Deterministic emulation will ignore RTC data, if any.
+	  */
+	void loadSavedata(char const *data, bool isDeterministic);
+
+	/** Returns save data length expected.
+	  * Deterministic emulation will ignore RTC data, if any.
+	  */
+	int saveSavedataLength(bool isDeterministic);
+
+	/** 0 = vram, 1 = rom, 2 = wram, 3 = cartram, 4 = oam, 5 = hram */
 	bool getMemoryArea(int which, unsigned char **data, int *length);
 
 	/** ROM header title of currently loaded ROM image. */
@@ -156,6 +166,20 @@ public:
 	int linkStatus(int which);
 
 	void getRegs(int *dest);
+	
+	/**
+	  * Get MBC3 RTC reg values.
+	  * @param dest length of at least 11, please
+	  *             [dh, dl, h, m, s, c, dhl, dll, hl, ml, sl]
+	  */
+	void getRtcRegs(unsigned long *dest);
+
+	/**
+	  * Set MBC3 RTC reg values.
+	  * @param src length of at least 11, please
+	  *            [dh, dl, h, m, s, c, dhl, dll, hl, ml, sl]
+	  */
+	void setRtcRegs(unsigned long *src);
 
 	void setInterruptAddresses(int *addrs, int numAddrs);
 	int getHitInterruptAddress();

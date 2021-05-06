@@ -129,16 +129,16 @@ GBEXPORT int gambatte_isloaded(GB *g) {
 	return g->isLoaded();
 }
 
-GBEXPORT void gambatte_savesavedata(GB *g, char *dest) {
-	g->saveSavedata(dest);
+GBEXPORT void gambatte_savesavedata(GB *g, char *dest, bool isDeterministic) {
+	g->saveSavedata(dest, isDeterministic);
 }
 
-GBEXPORT void gambatte_loadsavedata(GB *g, char const *data) {
-	g->loadSavedata(data);
+GBEXPORT void gambatte_loadsavedata(GB *g, char const *data, bool isDeterministic) {
+	g->loadSavedata(data, isDeterministic);
 }
 
-GBEXPORT int gambatte_savesavedatalength(GB *g) {
-	return g->saveSavedataLength();
+GBEXPORT int gambatte_savesavedatalength(GB *g, bool isDeterministic) {
+	return g->saveSavedataLength(isDeterministic);
 }
 
 GBEXPORT int gambatte_newstatelen(GB *g) {
@@ -192,6 +192,14 @@ GBEXPORT int gambatte_linkstatus(GB *g, int which)
 
 GBEXPORT void gambatte_getregs(GB *g, int *dest) {
 	g->getRegs(dest);
+}
+
+GBEXPORT void gambatte_getrtcregs(GB *g, unsigned long *dest) {
+	g->getRtcRegs(dest);
+}
+
+GBEXPORT void gambatte_setrtcregs(GB *g, unsigned long *src) {
+	g->setRtcRegs(src);
 }
 
 GBEXPORT void gambatte_setinterruptaddresses(GB *g, int *addrs, int numAddrs) {

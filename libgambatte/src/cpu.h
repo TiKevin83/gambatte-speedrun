@@ -32,9 +32,9 @@ public:
 	void saveRtcState(SaveState& state);
 	void loadState(SaveState const &state);
 	void setLayers(unsigned mask) { mem_.setLayers(mask); }
-	void loadSavedata(char const *data) { mem_.loadSavedata(data, cycleCounter_); }
-	int saveSavedataLength() {return mem_.saveSavedataLength(); }
-	void saveSavedata(char *dest) { mem_.saveSavedata(dest, cycleCounter_); }
+	void saveSavedata(char* dest, bool isDeterministic) { mem_.saveSavedata(dest, cycleCounter_, isDeterministic); }
+	void loadSavedata(char const *data, bool isDeterministic) { mem_.loadSavedata(data, cycleCounter_, isDeterministic); }
+	int saveSavedataLength(bool isDeterministic) { return mem_.saveSavedataLength(isDeterministic); }
 
 	bool getMemoryArea(int which, unsigned char **data, int *length) { return mem_.getMemoryArea(which, data, length); }
 
@@ -108,6 +108,8 @@ public:
 	int linkStatus(int which) { return mem_.linkStatus(which); }
 
 	void getRegs(int *dest);
+	void getRtcRegs(unsigned long *dest) { mem_.getRtcRegs(dest, cycleCounter_); }
+	void setRtcRegs(unsigned long *src) { mem_.setRtcRegs(src); }
 	void setInterruptAddresses(int *addrs, int numAddrs);
 	int getHitInterruptAddress();
 
