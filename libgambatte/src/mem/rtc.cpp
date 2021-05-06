@@ -239,7 +239,7 @@ void Rtc::setBaseTime(timeval basetime, unsigned long const cc) {
 
 void Rtc::setDh(unsigned const newDh, unsigned const long cc) {
 	update(cc);
-	dataDh_ = (newDh & 0xC1);
+	dataDh_ = newDh & 0xC1;
 }
 
 void Rtc::setDl(unsigned const newLowdays, unsigned const long cc) {
