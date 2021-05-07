@@ -34,6 +34,7 @@ public:
 
 	void latch(unsigned long const cc) { doLatch(cc); }
 
+	void saveRtcState(SaveState &state, unsigned long const cc);
 	void loadState(SaveState const &state);
 
 	void getRtcRegs(unsigned long *dest, unsigned long const cc);

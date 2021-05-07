@@ -124,6 +124,30 @@ void Rtc::doSwapActive() {
 	}
 }
 
+void Rtc::saveRtcState(SaveState &state, unsigned long const cc) {
+	update(cc);
+	state.rtc.dataDh = dataDh_;
+	state.rtc.dataDl = dataDl_;
+	state.rtc.dataH = dataH_;
+	if (dataH_ < 0)
+		state.rtc.dataH += 0x20;
+	
+	state.rtc.dataM = dataM_;
+	if (dataM_ < 0)
+		state.rtc.dataM += 0x40;
+
+	state.rtc.dataS = dataS_;
+	if (dataS_ < 0)
+		state.rtc.dataS += 0x40;
+
+	state.rtc.dataC = dataC_;
+	state.rtc.latchDh = latchDh_;
+	state.rtc.latchDl = latchDl_;
+	state.rtc.latchH = latchH_;
+	state.rtc.latchM = latchM_;
+	state.rtc.latchS = latchS_;
+}
+
 void Rtc::loadState(SaveState const &state) {
 	dataDh_ = state.rtc.dataDh;
 	dataDl_ = state.rtc.dataDl;

@@ -740,7 +740,7 @@ void Cartridge::setStatePtrs(SaveState &state) {
 
 void Cartridge::saveRtcState(SaveState& state, unsigned long const cc) {
 	if (!isHuC3())
-		rtc_.update(cc);
+		rtc_.saveRtcState(state, cc);
 
 	time_.saveRtcState(state, cc, isHuC3());
 }
