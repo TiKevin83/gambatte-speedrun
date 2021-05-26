@@ -280,21 +280,28 @@ static void runTestRom(
 		bool const agb) {
 	gambatte::GB gb;
 
-	if (cgb) {
-		if (gb.loadBios("bios.gbc", 0x900, 0x31672598)) {
-			std::fprintf(stderr, "Failed to load bios image file bios.gbc\n");
-			std::abort();
-		}
-	} else {
-		if (gb.loadBios("bios.gb", 0x100, 0x580A33B9)) {
-			std::fprintf(stderr, "Failed to load bios image file bios.gb\n");
-			std::abort();
-		}
-	}
-
 	if (gb.load(file, cgb ? (gambatte::GB::LoadFlag::CGB_MODE | (agb * gambatte::GB::LoadFlag::GBA_FLAG)) : 0)) {
 		std::fprintf(stderr, "Failed to load ROM image file %s\n", file.c_str());
 		std::abort();
+	}
+
+	if (cgb) {
+		if (agb) {
+			if (!gb.loadState("./states/pokemonPostBIOS/agbPostBootROM.gqs")) {
+				std::fprintf(stderr, "Failed to load initial agb post bootROM state\n");
+				std::abort();
+			}
+		} else {
+			if (!gb.loadState("./states/pokemonPostBIOS/cgbPostBootROM.gqs")) {
+				std::fprintf(stderr, "Failed to load initial cgb post bootROM state\n");
+				std::abort();
+			}
+		}
+	} else {
+		if (!gb.loadState("./states/pokemonPostBIOS/dmgPostBootROM.gqs")) {
+			std::fprintf(stderr, "Failed to load initial dmg post bootROM state\n");
+			std::abort();
+		}
 	}
 
 	if (!cgb) {
